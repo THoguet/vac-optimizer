@@ -1,0 +1,26 @@
+<div class="calendar">
+	<h3>{{ getMonthName() }}</h3>
+	<div class="row header">
+		<p class="day">L</p>
+		<p class="day">M</p>
+		<p class="day">M</p>
+		<p class="day">J</p>
+		<p class="day">V</p>
+		<p class="day">S</p>
+		<p class="day">D</p>
+	</div>
+	<div class="cols">
+		@for (week of weeksInAMonth; track $index) {
+		<div class="row week">
+			@for (day of week; track $index) {
+			@if (day === null) {
+			<p class="day empty"></p>
+			} @else {
+			<p [class.start]="selectedDates.isStart(day)" [class.end]="selectedDates.isEnd(day)" [class.selected]="selectedDates.isSelected(day)"
+				[class]="selectedDates.getClasses(day)" class="day number" [matTooltip]="selectedDates.getTooltip(day)" [matTooltipShowDelay]="500">{{ day.getDate() }}</p>
+			}
+			}
+		</div>
+		}
+	</div>
+</div>

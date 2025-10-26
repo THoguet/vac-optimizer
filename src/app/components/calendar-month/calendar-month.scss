@@ -1,0 +1,101 @@
+.calendar {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: flex-start;
+
+	mat-card {
+		width: 100%;
+		max-width: 400px;
+	}
+
+	h3 {
+		margin: 0 0 8px 0;
+		font-weight: normal;
+	}
+}
+
+.row {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	width: 100%;
+
+	&.header {
+		font-weight: bold;
+		margin-bottom: 8px;
+	}
+
+	.day {
+		text-align: center;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 30px;
+		height: 30px;
+		margin: 0;
+		border-radius: 40%;
+
+		&.empty {
+			visibility: hidden;
+		}
+
+		&.number:hover {
+			background-color: #e0e0e0;
+			color: black;
+			cursor: default;
+		}
+
+	}
+
+	.selected {
+		cursor: help !important;
+	}
+
+	.selected:not(.start):not(.end) {
+		border-radius: 0;
+	}
+
+	>.start:not(.end) {
+		border-radius: 40% 0 0 40%;
+	}
+
+	>.end:not(.start) {
+		border-radius: 0 40% 40% 0;
+	}
+}
+
+
+.today {
+	border-color: #1976d2;
+	border-width: 2px;
+	width: 26px !important;
+	height: 26px !important;
+	border-style: dashed !important;
+}
+
+.other-month {
+	color: #9e9e9e;
+}
+
+.weekend {
+	background-color: #ffca39;
+}
+
+.closed-day {
+	border: 2px solid #0ee3ff;
+	width: 26px !important;
+	height: 26px !important;
+}
+
+.rtt {
+	background-color: #99ff87;
+}
+
+.cp {
+	background-color: #eca0ff;
+}
+
+.other {
+	background-color: #ff9b9b;
+}
