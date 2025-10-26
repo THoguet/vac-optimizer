@@ -28,9 +28,7 @@ export class CalendarMonth implements OnInit {
 		return monthNames[this.monthIndex];
 	}
 
-	constructor(private calendarService: CalendarService) { }
-
 	ngOnInit(): void {
-		this.weeksInAMonth = this.calendarService.weeksInMonth(this.monthIndex, this.year);
+		this.weeksInAMonth = CalendarService.weeksInMonth(this.monthIndex, this.year);
 	}
 }

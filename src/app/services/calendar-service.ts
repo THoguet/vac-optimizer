@@ -15,7 +15,7 @@ export class CalendarService {
 
 	getSelectedDatesForYear(year: number): SelectedDates {
 		const holidays = this.getHolidays(year);
-		const monthInAYear = this.monthsInYear(year);
+		const monthInAYear = CalendarService.monthsInYear(year);
 		let selectedDates: SelectedDates = new SelectedDates();
 		for (const weeksInAMonth of monthInAYear) {
 			for (const daysInAWeek of weeksInAMonth) {
@@ -23,38 +23,24 @@ export class CalendarService {
 					if (day) {
 						this.setWeekendSelection(day, selectedDates);
 						if (holidays.some(holiday => holiday.getTime() === day.getTime())) {
-							selectedDates.push(new SelectedDate(dayType.CLOSED_DAY, new DateRange<Date>(day, day)));
+							selectedDates.push(new SelectedDate(DayType.CLOSED_DAY, new DateRange<Date>(day, day)));
 						}
 						if (day.getDate() === new Date().getDate() && day.getMonth() === new Date().getMonth() && day.getFullYear() === new Date().getFullYear()) {
-							selectedDates.push(new SelectedDate(dayType.TODAY, new DateRange<Date>(day, day)));
+							selectedDates.push(new SelectedDate(DayType.TODAY, new DateRange<Date>(day, day)));
 						}
 					}
 				}
 			}
 		}
-		selectedDates.computeHeuristics();
-		for (const weeksInAMonth of monthInAYear) {
-			for (const daysInAWeek of weeksInAMonth) {
-				for (const day of daysInAWeek) {
-					if (day) {
-						if (day.getDay() === 5) {
-							// Friday
-							selectedDates.push(new SelectedDate(dayType.RTT, new DateRange<Date>(day, day)));
-						}
-					}
-				}
-			}
-		}
-		selectedDates.computeHeuristics();
 		return selectedDates;
 	}
 
 	setWeekendSelection(date: Date, selectedDates: SelectedDates) {
 		if (date.getDay() === 6) {
-			selectedDates.push(new SelectedDate(dayType.WEEKEND, new DateRange<Date>(date, new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1))));
+			selectedDates.push(new SelectedDate(DayType.WEEKEND, new DateRange<Date>(date, new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1))));
 		}
 		if (date.getDate() === 1 && date.getDay() === 0) {
-			selectedDates.push(new SelectedDate(dayType.WEEKEND, new DateRange<Date>(new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1), date)));
+			selectedDates.push(new SelectedDate(DayType.WEEKEND, new DateRange<Date>(new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1), date)));
 		}
 	}
 
@@ -67,7 +53,7 @@ export class CalendarService {
 		return holidaysDate;
 	}
 
-	daysInWeek(weekIndex: number, monthIndex: number, year: number): Week {
+	static daysInWeek(weekIndex: number, monthIndex: number, year: number): Week {
 		const firstDayOfMonth = new Date(year, monthIndex, 1);
 		const firstDayOfWeek = new Date(firstDayOfMonth);
 		let offset = firstDayOfMonth.getDay() - 1; // Adjust to make Monday the first day of the week
@@ -89,7 +75,7 @@ export class CalendarService {
 		return days;
 	}
 
-	weeksInMonth(monthIndex: number, year: number): Month {
+	static weeksInMonth(monthIndex: number, year: number): Month {
 		const weeks: Month = [];
 		let weekIndex = 0;
 		while (true) {
@@ -104,17 +90,12 @@ export class CalendarService {
 	}
 
 
-	monthsInYear(year: number): Year {
+	static monthsInYear(year: number): Year {
 		const months: Year = [];
 		for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
 			months.push(this.weeksInMonth(monthIndex, year));
 		}
 		return months;
-	}
-
-	optimizeVacations(vacationsNumber: VacationsNumber, year: number, selectedDates: SelectedDates): void {
-		// Logic to optimize vacations
-
 	}
 }
 
@@ -128,7 +109,7 @@ export type Week = (Date | null)[];
 export type Month = Week[];
 export type Year = Month[];
 
-export enum dayType {
+export enum DayType {
 	WEEKEND = "weekend",
 	CLOSED_DAY = "closed-day",
 	RTT = "rtt",
@@ -137,13 +118,13 @@ export enum dayType {
 	TODAY = "today",
 }
 
-export const tooltipTypeMapping: { [key in dayType]: string } = {
-	[dayType.WEEKEND]: "Weekend",
-	[dayType.CLOSED_DAY]: "Jour Férié",
-	[dayType.RTT]: "RTT",
-	[dayType.CP]: "Congé Payé",
-	[dayType.OTHER]: "Autre",
-	[dayType.TODAY]: "Aujourd'hui",
+export const tooltipTypeMapping: { [key in DayType]: string } = {
+	[DayType.WEEKEND]: "Weekend",
+	[DayType.CLOSED_DAY]: "Jour Férié",
+	[DayType.RTT]: "RTT",
+	[DayType.CP]: "Congé Payé",
+	[DayType.OTHER]: "Autre",
+	[DayType.TODAY]: "Aujourd'hui",
 };
 
 export const monthNames: string[] = [
@@ -172,10 +153,10 @@ export interface SelectedDateInterface {
 }
 
 export class SelectedDate implements SelectedDateInterface {
-	type: dayType | null;
+	type: DayType | null;
 	range: DateRange<Date>;
 
-	constructor(type: dayType | null, range: DateRange<Date>) {
+	constructor(type: DayType | null, range: DateRange<Date>) {
 		this.type = type;
 		this.range = range;
 	}
@@ -193,7 +174,7 @@ export class SelectedDate implements SelectedDateInterface {
 	}
 
 	getClasses(date: Date): string {
-		let returnType: dayType | string = "";
+		let returnType: DayType | string = "";
 		if (this.type && date >= this.range.start! && date <= this.range.end!) {
 			returnType = returnType += this.type + " ";
 		}
@@ -229,30 +210,71 @@ export class SelectedDates implements SelectedDateInterface {
 	}
 
 	// make a "mother group" with type = null when two or more groups are adjacent or overlapping; keep the children groups
-	grouping() {
-		this.datesSelected.sort((a, b) => a.range.start!.getTime() - b.range.start!.getTime());
-		let grouped: SelectedDate[] = [];
-		let i = 0;
-		while (i < this.datesSelected.length) {
-			let current = this.datesSelected[i];
-			let j = i + 1;
-			while (j < this.datesSelected.length) {
-				let next = this.datesSelected[j];
-				if (current.range.end! >= next.range.start!) {
-					// overlapping or adjacent
-					current = new SelectedDate(null, new DateRange<Date>(
-						current.range.start! < next.range.start! ? current.range.start! : next.range.start!,
-						current.range.end! > next.range.end! ? current.range.end! : next.range.end!
-					));
-					j++;
-				} else {
-					break;
-				}
-			}
-			grouped.push(current);
-			i = j;
+	grouping(): void {
+		if (this._datesSelected.length <= 1) {
+			return;
 		}
-		this.datesSelected = grouped;
+
+		// Sort dates by start date
+		const sorted = [...this._datesSelected].sort((a, b) => {
+			const aStart = a.range.start?.getTime() ?? 0;
+			const bStart = b.range.start?.getTime() ?? 0;
+			return aStart - bStart;
+		});
+
+		// Group adjacent or overlapping dates
+		const groups: SelectedDate[][] = [];
+		let currentGroup: SelectedDate[] = [sorted[0]];
+
+		for (let i = 1; i < sorted.length; i++) {
+			const current = sorted[i];
+			const previous = sorted[i - 1];
+
+			const prevEnd = previous.range.end?.getTime() ?? 0;
+			const currStart = current.range.start?.getTime() ?? 0;
+
+			// Check if dates are adjacent (next day) or overlapping
+			const oneDayInMs = 24 * 60 * 60 * 1000;
+			const isAdjacent = currStart - prevEnd <= oneDayInMs;
+
+			if (isAdjacent) {
+				currentGroup.push(current);
+			} else {
+				if (currentGroup.length > 1) {
+					groups.push(currentGroup);
+				}
+				currentGroup = [current];
+			}
+		}
+
+		// Add the last group if it has more than one element
+		if (currentGroup.length > 1) {
+			groups.push(currentGroup);
+		}
+
+		// Create mother groups and rebuild datesSelected
+		const result: SelectedDate[] = [...this._datesSelected];
+
+		for (const group of groups) {
+			const groupStart = group.reduce((min, date) => {
+				const start = date.range.start?.getTime() ?? 0;
+				return min === 0 ? start : Math.min(min, start);
+			}, 0);
+
+			const groupEnd = group.reduce((max, date) => {
+				const end = date.range.end?.getTime() ?? 0;
+				return Math.max(max, end);
+			}, 0);
+
+			const motherGroup = new SelectedDate(
+				null,
+				new DateRange<Date>(new Date(groupStart), new Date(groupEnd))
+			);
+
+			result.push(motherGroup);
+		}
+
+		this.datesSelected = result;
 	}
 
 	isSelected(date: Date): boolean {
@@ -316,7 +338,7 @@ export class SelectedDates implements SelectedDateInterface {
 		return this.datesSelected.map(dateSelected => dateSelected.getTooltip(date)).filter(tooltip => tooltip).join(" + ");
 	}
 
-	computeHeuristics(): void {
+	computeHeuristics(): number {
 		// Logic to compute heuristics on selected dates
 		// use fibonacci sequence as heuristic points
 
@@ -330,9 +352,160 @@ export class SelectedDates implements SelectedDateInterface {
 			return acc + (fibonacci[days] || 0);
 		}, 0);
 		console.log(`Heuristic Points: ${heuristicPoints}`);
+		return heuristicPoints;
 	}
 
-	optimizeVacations(vacationsNumber: VacationsNumber, year: number): void {
-		// Logic to optimize vacations
+	optimizeVacations(vacationsNumber: VacationsNumber): void {
+		this.samediMalin(vacationsNumber);
+		this.lookForVacationRec();
+	}
+
+	samediMalin(vacationsNumber: VacationsNumber): void {
+		const samedi_ferie = this.datesSelected.filter(date => date.type === DayType.CLOSED_DAY && date.range.start?.getDay() === 6);
+
+		for (const holiday of samedi_ferie) {
+			if (!holiday.range.start) continue;
+
+			// Skip if no CP days available
+			if (vacationsNumber.cp < 2) {
+				continue;
+			}
+
+			// Get the Saturday date (holiday) and the following Sunday
+			const saturdayDate = new Date(holiday.range.start);
+			const sundayDate = new Date(saturdayDate);
+			sundayDate.setDate(saturdayDate.getDate() + 1);
+
+			// Calculate dates for all three strategies (2 CP days total each)
+			// Strategy 1: 2 days before (Thursday + Friday)
+			const twoDaysBefore1 = new Date(saturdayDate);
+			twoDaysBefore1.setDate(saturdayDate.getDate() - 2);
+			const twoDaysBefore2 = new Date(saturdayDate);
+			twoDaysBefore2.setDate(saturdayDate.getDate() - 1);
+
+			// Strategy 2: 2 days after (Monday + Tuesday)
+			const twoDaysAfter1 = new Date(sundayDate);
+			twoDaysAfter1.setDate(sundayDate.getDate() + 1);
+			const twoDaysAfter2 = new Date(sundayDate);
+			twoDaysAfter2.setDate(sundayDate.getDate() + 2);
+
+			// Strategy 3: 1 day before + 1 day after (Friday + Monday)
+			const oneDayBefore = new Date(saturdayDate);
+			oneDayBefore.setDate(saturdayDate.getDate() - 1);
+			const oneDayAfter = new Date(sundayDate);
+			oneDayAfter.setDate(sundayDate.getDate() + 1);
+
+			// Check if we can apply each strategy
+			const canApplyTwoBeforeStrategy =
+				!this.isSelected(twoDaysBefore1) &&
+				!this.isSelected(twoDaysBefore2);
+
+			const canApplyTwoAfterStrategy =
+				!this.isSelected(twoDaysAfter1) &&
+				!this.isSelected(twoDaysAfter2);
+
+			const canApplyMixedStrategy =
+				!this.isSelected(oneDayBefore) &&
+				!this.isSelected(oneDayAfter);
+
+			// Test all applicable strategies and choose the one with the best heuristic score
+			const strategies: { apply: () => void; heuristic: number }[] = [];
+			const tempDatesBackup = [...this._datesSelected];
+
+			if (canApplyTwoBeforeStrategy) {
+				this.push(new SelectedDate(DayType.CP, new DateRange<Date>(twoDaysBefore1, twoDaysBefore2)));
+				strategies.push({
+					apply: () => {
+						this._datesSelected = [...tempDatesBackup];
+						this.push(new SelectedDate(DayType.CP, new DateRange<Date>(twoDaysBefore1, twoDaysBefore2)));
+						vacationsNumber.cp -= 1;
+					},
+					heuristic: this.computeHeuristics()
+				});
+				this._datesSelected = [...tempDatesBackup];
+				this.datesSelected = this._datesSelected.slice();
+				this.grouping();
+			}
+
+			if (canApplyTwoAfterStrategy) {
+				this.push(new SelectedDate(DayType.CP, new DateRange<Date>(twoDaysAfter1, twoDaysAfter2)));
+				strategies.push({
+					apply: () => {
+						this._datesSelected = [...tempDatesBackup];
+						this.push(new SelectedDate(DayType.CP, new DateRange<Date>(twoDaysAfter1, twoDaysAfter2)));
+						vacationsNumber.cp -= 1;
+					},
+					heuristic: this.computeHeuristics()
+				});
+				this._datesSelected = [...tempDatesBackup];
+				this.datesSelected = this._datesSelected.slice();
+				this.grouping();
+			}
+
+			if (canApplyMixedStrategy) {
+				this.push(new SelectedDate(DayType.CP, new DateRange<Date>(oneDayBefore, oneDayBefore)));
+				this.push(new SelectedDate(DayType.CP, new DateRange<Date>(oneDayAfter, oneDayAfter)));
+				strategies.push({
+					apply: () => {
+						this._datesSelected = [...tempDatesBackup];
+						this.push(new SelectedDate(DayType.CP, new DateRange<Date>(oneDayBefore, oneDayBefore)));
+						this.push(new SelectedDate(DayType.CP, new DateRange<Date>(oneDayAfter, oneDayAfter)));
+						vacationsNumber.cp -= 1;
+					},
+					heuristic: this.computeHeuristics()
+				});
+				this._datesSelected = [...tempDatesBackup];
+				this.datesSelected = this._datesSelected.slice();
+				this.grouping();
+			}
+
+			// Apply the strategy with the best heuristic score
+			if (strategies.length > 0) {
+				const bestStrategy = strategies.reduce((best, current) =>
+					current.heuristic > best.heuristic ? current : best
+				);
+				bestStrategy.apply();
+			}
+		}
+	}
+
+	lookForVacationRec(vacType: DayType): { apply: () => void; heuristic: number } {
+		const daysOfYear = CalendarService.monthsInYear(2026);
+		const tempDatesBackup = [...this._datesSelected];
+		let strategies: { apply: () => void; heuristic: number }[] = [];
+		for (const month of daysOfYear) {
+			for (const week of month) {
+				for (const day of week) {
+					if (day && !this.isSelected(day)) {
+						this._datesSelected = [...tempDatesBackup];
+						this.datesSelected = this._datesSelected.slice();
+						this.grouping();
+						// mark these days as vacation
+						const startDay = new Date(day);
+						const endDay = new Date(day);
+						this.push(new SelectedDate(vacType, new DateRange<Date>(startDay, endDay)));
+						strategies.push({
+							apply: () => {
+								this._datesSelected = [...tempDatesBackup];
+								this.push(new SelectedDate(vacType, new DateRange<Date>(startDay, endDay)));
+							},
+							heuristic: this.computeHeuristics()
+						});
+						this._datesSelected = [...tempDatesBackup];
+						this.datesSelected = this._datesSelected.slice();
+						this.grouping();
+					}
+				}
+			}
+		}
+		// Apply the strategy with the best heuristic score
+		if (strategies.length > 0) {
+			const bestStrategy = strategies.reduce((best, current) =>
+				current.heuristic > best.heuristic ? current : best
+			);
+			bestStrategy.apply();
+			return bestStrategy;
+		}
+		return { apply: () => { }, heuristic: -1 };
 	}
 }
