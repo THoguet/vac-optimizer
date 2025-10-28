@@ -339,25 +339,100 @@ export class SelectedDates implements SelectedDateInterface {
 	}
 
 	computeHeuristics(): number {
-		// Logic to compute heuristics on selected dates
-		// use fibonacci sequence as heuristic points
-
-		const fibonacci = [0, 1];
-		for (let i = 2; i <= 10; i++) {
-			fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
+		if (this.datesSelected.length === 0) {
+			return 0;
 		}
 
-		const heuristicPoints = this.datesSelected.reduce((acc, dateSelected) => {
-			const days = dateSelected.getLengthInDays();
-			return acc + (fibonacci[days] || 0);
-		}, 0);
-		console.log(`Heuristic Points: ${heuristicPoints}`);
-		return heuristicPoints;
+		let totalScore = 0;
+
+		// Sort all dates by start date to find next closest dates
+		const sorted = [...this.datesSelected].filter(date => date.type !== null).sort((a, b) => {
+			const aStart = a.range.start?.getTime() ?? 0;
+			const bStart = b.range.start?.getTime() ?? 0;
+			return aStart - bStart;
+		});
+
+		// PRIMARY: Optimize adjacency - reduce "little holes" between vacation periods
+		for (let i = 0; i < sorted.length - 1; i++) {
+			const current = sorted[i];
+			const next = sorted[i + 1];
+
+			// Get dates as UTC strings to remove timezone issues
+			const currentEndDate = new Date(current.range.end ?? new Date());
+			const nextStartDate = new Date(next.range.start ?? new Date());
+
+			// Convert to date-only strings (YYYY-MM-DD) to compare calendar days
+			const currentEndString = currentEndDate.toISOString().split('T')[0];
+			const nextStartString = nextStartDate.toISOString().split('T')[0];
+
+			// Parse back to dates at UTC midnight
+			const currentEndDateNormalized = new Date(currentEndString + 'T00:00:00Z');
+			const nextStartDateNormalized = new Date(nextStartString + 'T00:00:00Z');
+
+			const currentEndTime = currentEndDateNormalized.getTime();
+			const nextStartTime = nextStartDateNormalized.getTime();
+
+			const oneDayInMs = 24 * 60 * 60 * 1000;
+
+			// Check if adjacent (next day) - this is the best case!
+			if (nextStartTime - currentEndTime === oneDayInMs) {
+				totalScore += 10; // Big bonus for adjacency
+			} else if (nextStartTime > currentEndTime) {
+				// Penalty based on days between the two dates
+				const daysBetween = Math.floor((nextStartTime - currentEndTime) / oneDayInMs) - 1;
+				// Ensure daysBetween is non-negative before taking sqrt
+				totalScore -= (Math.sqrt(Math.max(0, daysBetween)));
+			}
+		}
+
+		// SECONDARY: Penalize uneven monthly distribution to encourage spread
+		const monthCounts = new Map<number, number>(); // Use year*12+month as key to avoid strings
+		for (const selectedDate of this.datesSelected) {
+			if (!selectedDate.range.start || !selectedDate.range.end) continue;
+
+			// Count days in this selected date range
+			const daysInRange = selectedDate.getLengthInDays();
+
+			// For each day in the range, add it to the appropriate month
+			let currentDate = new Date(selectedDate.range.start);
+			for (let i = 0; i < daysInRange; i++) {
+				const monthKey = currentDate.getFullYear() * 12 + currentDate.getMonth();
+				monthCounts.set(monthKey, (monthCounts.get(monthKey) ?? 0) + 1);
+				currentDate.setDate(currentDate.getDate() + 1);
+			}
+		}
+
+		// Apply small penalty for uneven distribution (secondary priority)
+		for (const count of monthCounts.values()) {
+			totalScore -= count; // Smaller penalty than gap filling
+		}
+
+		return totalScore;
 	}
 
 	optimizeVacations(vacationsNumber: VacationsNumber): void {
 		this.samediMalin(vacationsNumber);
-		this.lookForVacationRec();
+		while (vacationsNumber.cp > 0) {
+			const result = this.lookForVacationRec(DayType.CP);
+			if (result.heuristic === -1) {
+				break;
+			}
+			vacationsNumber.cp -= 1;
+		}
+		while (vacationsNumber.rtt > 0) {
+			const result = this.lookForVacationRec(DayType.RTT);
+			if (result.heuristic === -1) {
+				break;
+			}
+			vacationsNumber.rtt -= 1;
+		}
+		while (vacationsNumber.other > 0) {
+			const result = this.lookForVacationRec(DayType.OTHER);
+			if (result.heuristic === -1) {
+				break;
+			}
+			vacationsNumber.other -= 1;
+		}
 	}
 
 	samediMalin(vacationsNumber: VacationsNumber): void {
@@ -418,7 +493,7 @@ export class SelectedDates implements SelectedDateInterface {
 					apply: () => {
 						this._datesSelected = [...tempDatesBackup];
 						this.push(new SelectedDate(DayType.CP, new DateRange<Date>(twoDaysBefore1, twoDaysBefore2)));
-						vacationsNumber.cp -= 1;
+						vacationsNumber.cp -= 2;
 					},
 					heuristic: this.computeHeuristics()
 				});
@@ -433,7 +508,7 @@ export class SelectedDates implements SelectedDateInterface {
 					apply: () => {
 						this._datesSelected = [...tempDatesBackup];
 						this.push(new SelectedDate(DayType.CP, new DateRange<Date>(twoDaysAfter1, twoDaysAfter2)));
-						vacationsNumber.cp -= 1;
+						vacationsNumber.cp -= 2;
 					},
 					heuristic: this.computeHeuristics()
 				});
@@ -450,7 +525,7 @@ export class SelectedDates implements SelectedDateInterface {
 						this._datesSelected = [...tempDatesBackup];
 						this.push(new SelectedDate(DayType.CP, new DateRange<Date>(oneDayBefore, oneDayBefore)));
 						this.push(new SelectedDate(DayType.CP, new DateRange<Date>(oneDayAfter, oneDayAfter)));
-						vacationsNumber.cp -= 1;
+						vacationsNumber.cp -= 2;
 					},
 					heuristic: this.computeHeuristics()
 				});
@@ -472,7 +547,7 @@ export class SelectedDates implements SelectedDateInterface {
 	lookForVacationRec(vacType: DayType): { apply: () => void; heuristic: number } {
 		const daysOfYear = CalendarService.monthsInYear(2026);
 		const tempDatesBackup = [...this._datesSelected];
-		let strategies: { apply: () => void; heuristic: number }[] = [];
+		let strategies: { apply: () => void; heuristic: number; value: Date }[] = [];
 		for (const month of daysOfYear) {
 			for (const week of month) {
 				for (const day of week) {
@@ -483,13 +558,14 @@ export class SelectedDates implements SelectedDateInterface {
 						// mark these days as vacation
 						const startDay = new Date(day);
 						const endDay = new Date(day);
-						this.push(new SelectedDate(vacType, new DateRange<Date>(startDay, endDay)));
+						this.datesSelected.push(new SelectedDate(vacType, new DateRange<Date>(startDay, endDay)));
 						strategies.push({
 							apply: () => {
 								this._datesSelected = [...tempDatesBackup];
 								this.push(new SelectedDate(vacType, new DateRange<Date>(startDay, endDay)));
 							},
-							heuristic: this.computeHeuristics()
+							heuristic: this.computeHeuristics(),
+							value: startDay
 						});
 						this._datesSelected = [...tempDatesBackup];
 						this.datesSelected = this._datesSelected.slice();

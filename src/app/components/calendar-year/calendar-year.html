@@ -1,4 +1,12 @@
 <div class="calendar-year">
+	@if (isLoading()) {
+	<div class="loading-overlay">
+		<div class="loading-spinner">
+			<div class="spinner"></div>
+			<p>Calcul en cours...</p>
+		</div>
+	</div>
+	}
 	@for (month of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]; track $index) {
 	<mat-card>
 		<mat-card-content>

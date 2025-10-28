@@ -1,6 +1,6 @@
 <div class="user-input">
 	<p>Optimisez vos jours de vacances en fonction des jours fériés et des week-ends !</p>
-	<form [formGroup]="userInputForm" (ngSubmit)="submitForm()" class="form">
+	<form [formGroup]="userInputForm">
 		<mat-form-field appearance="fill">
 			<mat-label>Combien de CP par an ?</mat-label>
 			<input matInput type="number" max="365" min="0" formControlName="CP" />
@@ -13,6 +13,5 @@
 			<mat-label>Autres jours</mat-label>
 			<input matInput type="number" max="365" min="0" formControlName="Others" />
 		</mat-form-field>
-		<button matButton="elevated" type="submit" [disabled]="userInputForm.invalid">Valider</button>
 	</form>
 </div>

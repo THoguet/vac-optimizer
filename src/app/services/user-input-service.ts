@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import Holidays, { HolidaysTypes } from 'date-holidays';
+import { VacationsNumber } from './calendar-service';
 
 
 
@@ -7,7 +8,21 @@ import Holidays, { HolidaysTypes } from 'date-holidays';
 	providedIn: 'root'
 })
 export class UserInputService {
-	calculateVacationOptimization(nbCP: number, nbRTT: number, nbOther: number, year: number, closedDays: Date[]) {
-		// Logic to calculate vacation optimization based on user input
+	private getRandomNumber(): number {
+		return Math.floor(Math.random() * 9) + 1;
+	}
+
+	vacationNumberSignal = signal<VacationsNumber>({
+		cp: this.getRandomNumber(),
+		rtt: this.getRandomNumber(),
+		other: this.getRandomNumber()
+	});
+
+	get vacationNumber() {
+		return this.vacationNumberSignal();
+	}
+
+	setVacationNumber(vacationsNumber: VacationsNumber) {
+		this.vacationNumberSignal.set(vacationsNumber);
 	}
 }
