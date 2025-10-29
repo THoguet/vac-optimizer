@@ -494,6 +494,7 @@ export class SelectedDates implements SelectedDateInterface {
 						this._datesSelected = [...tempDatesBackup];
 						this.push(new SelectedDate(DayType.CP, new DateRange<Date>(twoDaysBefore1, twoDaysBefore2)));
 						vacationsNumber.cp -= 2;
+						vacationsNumber.other += 1; // Reward: gain 1 other day
 					},
 					heuristic: this.computeHeuristics()
 				});
@@ -509,6 +510,7 @@ export class SelectedDates implements SelectedDateInterface {
 						this._datesSelected = [...tempDatesBackup];
 						this.push(new SelectedDate(DayType.CP, new DateRange<Date>(twoDaysAfter1, twoDaysAfter2)));
 						vacationsNumber.cp -= 2;
+						vacationsNumber.other += 1; // Reward: gain 1 other day
 					},
 					heuristic: this.computeHeuristics()
 				});
@@ -526,6 +528,7 @@ export class SelectedDates implements SelectedDateInterface {
 						this.push(new SelectedDate(DayType.CP, new DateRange<Date>(oneDayBefore, oneDayBefore)));
 						this.push(new SelectedDate(DayType.CP, new DateRange<Date>(oneDayAfter, oneDayAfter)));
 						vacationsNumber.cp -= 2;
+						vacationsNumber.other += 1; // Reward: gain 1 other day
 					},
 					heuristic: this.computeHeuristics()
 				});

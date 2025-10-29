@@ -25,7 +25,7 @@ export class CalendarYear implements OnInit {
 					this.selectedDates.optimizeVacations(vacationData);
 				}
 				this.isLoading.set(false);
-			}, 500);
+			}, 1);
 		});
 	}
 
@@ -35,6 +35,5 @@ export class CalendarYear implements OnInit {
 
 	ngOnInit(): void {
 		this.selectedDates = this.calendarService.getSelectedDatesForYear(this.year);
-		this.isLoading.set(false);
 	}
 }
