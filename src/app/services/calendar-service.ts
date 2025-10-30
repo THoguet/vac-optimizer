@@ -13,9 +13,17 @@ const allTypesOptions: HolidaysTypes.Options = {
 })
 export class CalendarService {
 
-	getSelectedDatesForYear(year: number): SelectedDates {
-		const holidays = this.getHolidays(year);
-		const monthInAYear = CalendarService.monthsInYear(year);
+	// Get selected dates from current date to the next year
+	getSelectedDatesFromNow(): SelectedDates {
+		const holidays = this.getHolidays();
+		let selectedDates: SelectedDates = new SelectedDates();
+		// Logic to populate selectedDates from now until the next year
+		return selectedDates;
+	}
+
+	getSelectedDatesForYear(): SelectedDates {
+		const holidays = this.getHolidays();
+		const monthInAYear = CalendarService.monthsInAYearFromNow();
 		let selectedDates: SelectedDates = new SelectedDates();
 		for (const weeksInAMonth of monthInAYear) {
 			for (const daysInAWeek of weeksInAMonth) {
@@ -45,10 +53,12 @@ export class CalendarService {
 	}
 
 
-	getHolidays(year: number): Date[] {
+	getHolidays(): Date[] {
 		// Logic to return holidays for the given year
 		const hd = new Holidays('FR', allTypesOptions);
-		const holidays = hd.getHolidays(year, lang);
+		const holidays = hd.getHolidays(new Date().getFullYear(), lang);
+		const holidaysPlusOne = hd.getHolidays(new Date().getFullYear() + 1, lang);
+		holidays.push(...holidaysPlusOne);
 		let holidaysDate: Date[] = holidays.map(holiday => new Date(holiday.date));
 		return holidaysDate;
 	}
@@ -93,6 +103,19 @@ export class CalendarService {
 	static monthsInYear(year: number): Year {
 		const months: Year = [];
 		for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+			months.push(this.weeksInMonth(monthIndex, year));
+		}
+		return months;
+	}
+
+
+	static monthsInAYearFromNow(): Year {
+		const months: Year = [];
+		const currentMonthIndex = new Date().getMonth();
+		const currentYear = new Date().getFullYear();
+		for (let i = 0; i < 12; i++) {
+			const monthIndex = (currentMonthIndex + i) % 12;
+			const year = currentYear + Math.floor((currentMonthIndex + i) / 12);
 			months.push(this.weeksInMonth(monthIndex, year));
 		}
 		return months;
@@ -548,7 +571,22 @@ export class SelectedDates implements SelectedDateInterface {
 	}
 
 	lookForVacationRec(vacType: DayType): { apply: () => void; heuristic: number } {
-		const daysOfYear = CalendarService.monthsInYear(2026);
+		const daysOfYear = CalendarService.monthsInAYearFromNow();
+		const now = new Date();
+		now.setHours(0, 0, 0, 0);
+		daysOfYear.forEach(month => {
+			month.forEach(week => {
+				week.forEach(day => {
+					if (day) {
+						if (day)
+							day.setHours(0, 0, 0, 0);
+						if (day && day < now) {
+							week[week.indexOf(day)] = null;
+						}
+					}
+				});
+			});
+		});
 		const tempDatesBackup = [...this._datesSelected];
 		let strategies: { apply: () => void; heuristic: number; value: Date }[] = [];
 		for (const month of daysOfYear) {
@@ -582,6 +620,9 @@ export class SelectedDates implements SelectedDateInterface {
 			const bestStrategy = strategies.reduce((best, current) =>
 				current.heuristic > best.heuristic ? current : best
 			);
+			strategies.forEach(strategy => {
+				console.log(`Strategy for ${strategy.value.toDateString()} has heuristic ${strategy.heuristic}`);
+			});
 			bestStrategy.apply();
 			return bestStrategy;
 		}

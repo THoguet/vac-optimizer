@@ -16,6 +16,12 @@ export class CalendarMonth implements OnInit {
 	@Input({ required: true })
 	year!: number;
 
+	getNow(): Date {
+		const now = new Date();
+		now.setHours(0, 0, 0, 0);
+		return now;
+	}
+
 	currentMonth: Date = new Date();
 
 	weeksInAMonth: Month = [];
