@@ -1,17 +1,18 @@
-import { Component, OnInit, effect, signal } from '@angular/core';
+import { Component, effect, signal } from '@angular/core';
 import { UserInputService } from '../../services/user-input-service';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { CalendarMonth } from "../calendar-month/calendar-month";
 import { CalendarService, SelectedDates } from '../../services/calendar-service';
 import { CommonModule } from '@angular/common';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
 	selector: 'app-calendar-year',
-	imports: [MatCard, CalendarMonth, MatCardContent, CommonModule],
+	imports: [MatCard, CalendarMonth, MatCardContent, CommonModule, MatProgressSpinner],
 	templateUrl: './calendar-year.html',
 	styleUrl: './calendar-year.scss',
 })
-export class CalendarYear implements OnInit {
+export class CalendarYear {
 	protected isLoading = signal(true);
 
 	constructor(private userInput: UserInputService, private calendarService: CalendarService) {
@@ -38,8 +39,4 @@ export class CalendarYear implements OnInit {
 
 	// months starting from actual date
 	protected months: number[] = Array.from({ length: 12 }, (_, i) => (new Date().getMonth() + i) % 12);
-
-	ngOnInit(): void {
-		this.selectedDates = this.calendarService.getSelectedDatesForYear();
-	}
 }

@@ -31,24 +31,25 @@ export class CalendarService {
 					if (day) {
 						this.setWeekendSelection(day, selectedDates);
 						if (holidays.some(holiday => holiday.getTime() === day.getTime())) {
-							selectedDates.push(new SelectedDate(DayType.CLOSED_DAY, new DateRange<Date>(day, day)));
+							selectedDates._datesSelected.push(new SelectedDate(DayType.CLOSED_DAY, new DateRange<Date>(day, day)));
 						}
 						if (day.getDate() === new Date().getDate() && day.getMonth() === new Date().getMonth() && day.getFullYear() === new Date().getFullYear()) {
-							selectedDates.push(new SelectedDate(DayType.TODAY, new DateRange<Date>(day, day)));
+							selectedDates._datesSelected.push(new SelectedDate(DayType.TODAY, new DateRange<Date>(day, day)));
 						}
 					}
 				}
 			}
 		}
+		selectedDates.update();
 		return selectedDates;
 	}
 
 	setWeekendSelection(date: Date, selectedDates: SelectedDates) {
 		if (date.getDay() === 6) {
-			selectedDates.push(new SelectedDate(DayType.WEEKEND, new DateRange<Date>(date, new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1))));
+			selectedDates._datesSelected.push(new SelectedDate(DayType.WEEKEND, new DateRange<Date>(date, new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1))));
 		}
 		if (date.getDate() === 1 && date.getDay() === 0) {
-			selectedDates.push(new SelectedDate(DayType.WEEKEND, new DateRange<Date>(new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1), date)));
+			selectedDates._datesSelected.push(new SelectedDate(DayType.WEEKEND, new DateRange<Date>(new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1), date)));
 		}
 	}
 
@@ -225,6 +226,11 @@ export class SelectedDate implements SelectedDateInterface {
 export class SelectedDates implements SelectedDateInterface {
 	_datesSelected: SelectedDate[] = [];
 	datesSelected: SelectedDate[] = [];
+
+	update(): void {
+		this.datesSelected = this._datesSelected.slice();
+		this.grouping();
+	}
 
 	push(selectedDate: SelectedDate) {
 		this._datesSelected.push(selectedDate);
@@ -436,21 +442,21 @@ export class SelectedDates implements SelectedDateInterface {
 	optimizeVacations(vacationsNumber: VacationsNumber): void {
 		this.samediMalin(vacationsNumber);
 		while (vacationsNumber.cp > 0) {
-			const result = this.lookForVacationRec(DayType.CP);
+			const result = this.lookForVacation(DayType.CP);
 			if (result.heuristic === -1) {
 				break;
 			}
 			vacationsNumber.cp -= 1;
 		}
 		while (vacationsNumber.rtt > 0) {
-			const result = this.lookForVacationRec(DayType.RTT);
+			const result = this.lookForVacation(DayType.RTT);
 			if (result.heuristic === -1) {
 				break;
 			}
 			vacationsNumber.rtt -= 1;
 		}
 		while (vacationsNumber.other > 0) {
-			const result = this.lookForVacationRec(DayType.OTHER);
+			const result = this.lookForVacation(DayType.OTHER);
 			if (result.heuristic === -1) {
 				break;
 			}
@@ -570,7 +576,7 @@ export class SelectedDates implements SelectedDateInterface {
 		}
 	}
 
-	lookForVacationRec(vacType: DayType): { apply: () => void; heuristic: number } {
+	lookForVacation(vacType: DayType): { apply: () => void; heuristic: number } {
 		const daysOfYear = CalendarService.monthsInAYearFromNow();
 		const now = new Date();
 		now.setHours(0, 0, 0, 0);

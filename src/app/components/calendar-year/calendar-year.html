@@ -2,13 +2,13 @@
 	@if (isLoading()) {
 	<div class="loading-overlay">
 		<div class="loading-spinner">
-			<div class="spinner"></div>
+			<mat-spinner></mat-spinner>
 			<p>Calcul en cours...</p>
 		</div>
 	</div>
 	}
 	@for (month of months; track $index) {
-	<mat-card>
+	<mat-card class="card">
 		<mat-card-content>
 			<app-calendar-month [monthIndex]="month" [year]="getYear(month)" [selectedDates]="selectedDates"></app-calendar-month>
 		</mat-card-content>

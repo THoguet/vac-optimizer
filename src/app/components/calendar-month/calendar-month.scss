@@ -1,16 +1,11 @@
 .calendar {
 	display: flex;
 	flex-direction: column;
-	align-items: flex-start;
-	justify-content: flex-start;
-
-	mat-card {
-		width: 100%;
-		max-width: 400px;
-	}
+	align-items: center;
+	gap: 16px;
 
 	h3 {
-		margin: 0 0 8px 0;
+		margin: 0;
 		font-weight: normal;
 	}
 }
@@ -36,18 +31,22 @@
 		margin: 0;
 		margin-top: 2px;
 		margin-bottom: 2px;
-		border-radius: 40%;
+		border-radius: 30%;
+		color: var(--number-color);
 
 		&.empty {
 			visibility: hidden;
 		}
 
 		&.number:hover {
-			background-color: #e0e0e0;
-			color: black;
+			background-color: var(--number-bg-hover);
+			color: var(--number-color-hover);
 			cursor: default;
 		}
 
+		&.past {
+			color: var(--past-color);
+		}
 	}
 
 	.selected {
@@ -58,50 +57,49 @@
 		border-radius: 0;
 	}
 
-	>.start:not(.end) {
-		border-radius: 40% 0 0 40%;
+	> .start:not(.end) {
+		border-radius: 30% 0 0 30%;
 	}
 
-	>.end:not(.start) {
-		border-radius: 0 40% 40% 0;
+	> .end:not(.start) {
+		border-radius: 0 30% 30% 0;
 	}
 }
 
-
 .today {
-	border-color: #1976d2;
+	border-color: var(--today-border-color);
 	border-width: 2px;
 	width: 26px !important;
 	height: 22px !important;
 	border-style: dashed !important;
+
+	:has(.dark-mode) {
+		border-color: #0b385c;
+	}
 }
 
 .other-month {
-	color: #9e9e9e;
+	color: var(--other-month-color);
 }
 
 .weekend {
-	background-color: #ffca39;
+	background-color: var(--weekend-bg);
 }
 
 .closed-day {
-	border: 2px solid #0ee3ff;
+	border: 2px solid var(--closed-day-bg);
 	width: 26px !important;
 	height: 22px !important;
 }
 
 .rtt {
-	background-color: #99ff87;
+	background-color: var(--rtt-bg);
 }
 
 .cp {
-	background-color: #eca0ff;
+	background-color: var(--cp-bg);
 }
 
 .other {
-	background-color: #ff9b9b;
-}
-
-.past {
-	color: #b0b0b0;
+	background-color: var(--other-bg);
 }

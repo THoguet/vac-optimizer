@@ -1,0 +1,21 @@
+@if (lightMode()) {
+	<button
+		animate.enter="enter-animation"
+		mat-fab
+		color="primary"
+		(click)="toggleTheme()"
+		aria-label="Toggle light mode"
+	>
+		<mat-icon aria-hidden="false" aria-label="Dark mode icon" fontIcon="dark_mode"></mat-icon>
+	</button>
+} @else {
+	<button
+		animate.enter="enter-animation"
+		mat-fab
+		color="accent"
+		(click)="toggleTheme()"
+		aria-label="Toggle dark mode"
+	>
+		<mat-icon aria-hidden="false" aria-label="Light mode icon" fontIcon="light_mode"></mat-icon>
+	</button>
+}

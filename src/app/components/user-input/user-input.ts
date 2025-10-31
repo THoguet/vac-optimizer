@@ -36,7 +36,7 @@ export class UserInput implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.userInputForm.valueChanges
 			.pipe(
-				debounceTime(2500),
+				debounceTime(1500),
 				takeUntil(this.destroy$)
 			)
 			.subscribe(() => this.submitForm());
