@@ -2,6 +2,9 @@
 	<h3>{{ getMonthName() }} {{ year }}</h3>
 	<div>
 		<div class="row header">
+			@if (calendarSettingsService.showWeekNumbers()) {
+				<p class="day empty week-number"></p>
+			}
 			<p class="day">L</p>
 			<p class="day">M</p>
 			<p class="day">M</p>
@@ -12,16 +15,36 @@
 		</div>
 		<div class="cols">
 			@for (week of weeksInAMonth; track $index) {
-			<div class="row week">
-				@for (day of week; track $index) {
-				@if (day === null) {
-				<p class="day empty"></p>
-				} @else {
-				<p [class.past]="day < getNow()" [class.start]="selectedDates.isStart(day)" [class.end]="selectedDates.isEnd(day)" [class.selected]="selectedDates.isSelected(day)"
-					[class]="selectedDates.getClasses(day)" class="day number" [matTooltip]="selectedDates.getTooltip(day)" [matTooltipShowDelay]="500">{{ day.getDate() }}</p>
-				}
-				}
-			</div>
+				<div class="row week">
+					@if (calendarSettingsService.showWeekNumbers()) {
+						<p
+							class="day week-number"
+							[class.start]="$index === 0"
+							[class.end]="$index === weeksInAMonth.length - 1"
+						>
+							{{ getWeekNumber(week) }}
+						</p>
+					}
+					@for (day of week; track $index) {
+						@if (day === null) {
+							<p class="day empty"></p>
+						} @else {
+							<p
+								[class.past]="day < getNow()"
+								[class.start]="selectedDates.isStart(day)"
+								[class.end]="selectedDates.isEnd(day)"
+								[class.selected]="selectedDates.isSelected(day)"
+								[class]="selectedDates.getClasses(day)"
+								class="day number"
+								[matTooltip]="selectedDates.getTooltip(day)"
+								[matTooltipShowDelay]="500"
+								[matTooltipTouchGestures]="'on'"
+							>
+								{{ day.getDate() }}
+							</p>
+						}
+					}
+				</div>
 			}
 		</div>
 	</div>

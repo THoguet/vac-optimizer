@@ -26,3 +26,26 @@
 	right: 20px;
 	z-index: 1000;
 }
+
+@media (max-width: 768px) {
+	.mat-divider-vertical {
+		display: none;
+	}
+
+	.mat-divider-horizontal {
+		display: block !important;
+	}
+}
+
+.mat-divider-vertical {
+	height: 80vh;
+	width: 1px;
+	margin: 0 16px;
+}
+
+.mat-divider-horizontal {
+	width: 80%;
+	height: 1px;
+	margin: 16px 0;
+	display: none;
+}

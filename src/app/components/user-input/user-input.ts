@@ -5,10 +5,18 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { UserInputService } from '../../services/user-input-service';
 import { VacationsNumber } from '../../services/calendar-service';
 import { debounceTime, takeUntil, Subject } from 'rxjs';
+import { CalendarSettings } from '../calendar-settings/calendar-settings';
 
 @Component({
 	selector: 'app-user-input',
-	imports: [MatFormField, MatLabel, MatInputModule, ReactiveFormsModule],
+	imports: [
+		MatFormField,
+		MatLabel,
+		MatInputModule,
+		ReactiveFormsModule,
+		CalendarSettings,
+		CalendarSettings,
+	],
 	templateUrl: './user-input.html',
 	styleUrl: './user-input.scss',
 })
@@ -17,11 +25,14 @@ export class UserInput implements OnInit, OnDestroy {
 		// Watch for signal changes and update form
 		effect(() => {
 			const vacationData = this.userInputService.vacationNumberSignal();
-			this.userInputForm.patchValue({
-				CP: vacationData.cp,
-				RTT: vacationData.rtt,
-				Others: vacationData.other,
-			}, { emitEvent: false });
+			this.userInputForm.patchValue(
+				{
+					CP: vacationData.cp,
+					RTT: vacationData.rtt,
+					Others: vacationData.other,
+				},
+				{ emitEvent: false },
+			);
 		});
 	}
 
@@ -35,10 +46,7 @@ export class UserInput implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.userInputForm.valueChanges
-			.pipe(
-				debounceTime(1500),
-				takeUntil(this.destroy$)
-			)
+			.pipe(debounceTime(1500), takeUntil(this.destroy$))
 			.subscribe(() => this.submitForm());
 	}
 
@@ -54,7 +62,7 @@ export class UserInput implements OnInit, OnDestroy {
 				rtt: this.userInputForm.get('RTT')?.value || 0,
 				other: this.userInputForm.get('Others')?.value || 0,
 			};
-			this.userInputService.setVacationNumber(vacationData);
+			this.userInputService.vacationNumberSignal.set(vacationData);
 		}
 	}
 }

@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CalendarService, Month, monthNames, SelectedDates } from '../../services/calendar-service';
 import { MatTooltip } from '@angular/material/tooltip';
+import { CalendarSettingsService } from '../../services/calendar-settings-service';
 
 @Component({
 	selector: 'app-calendar-month',
@@ -9,6 +10,7 @@ import { MatTooltip } from '@angular/material/tooltip';
 	styleUrl: './calendar-month.scss',
 })
 export class CalendarMonth implements OnInit {
+	constructor(protected calendarSettingsService: CalendarSettingsService) {}
 
 	@Input({ required: true })
 	monthIndex!: number;
@@ -26,12 +28,20 @@ export class CalendarMonth implements OnInit {
 
 	weeksInAMonth: Month = [];
 
-
 	@Input({ required: true })
 	selectedDates!: SelectedDates;
 
 	getMonthName(): string {
 		return monthNames[this.monthIndex];
+	}
+
+	getWeekNumber(week: (Date | null)[]): number | null {
+		for (const day of week) {
+			if (day) {
+				return CalendarService.getWeekNumber(day);
+			}
+		}
+		return null;
 	}
 
 	ngOnInit(): void {

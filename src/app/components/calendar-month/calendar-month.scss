@@ -103,3 +103,27 @@
 .other {
 	background-color: var(--other-bg);
 }
+
+.row .week-number {
+	height: 30px;
+	font-weight: bold;
+	color: var(--week-number-color);
+	margin-right: 0.5rem;
+	background-color: var(--week-number-bg);
+	border-radius: 0;
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+.row .week-number:hover {
+	background-color: var(--week-number-bg-hover);
+	cursor: default;
+}
+
+.row .week-number.start {
+	border-radius: 30% 30% 0 0;
+}
+
+.row .week-number.end {
+	border-radius: 0 0 30% 30%;
+}
