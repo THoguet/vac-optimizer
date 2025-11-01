@@ -19,6 +19,10 @@ const allTypesOptions: HolidaysTypes.Options = {
 	providedIn: 'root',
 })
 export class CalendarService {
+	// Cache for holiday timestamps
+	private holidayTimestampsCache: Set<number> | null = null;
+	private holidayCacheYear: number | null = null;
+
 	// Get selected dates from current date to the next year
 	getSelectedDatesFromNow(): SelectedDates {
 		const holidays = this.getHolidays();
@@ -31,20 +35,30 @@ export class CalendarService {
 		const holidays = this.getHolidays();
 		const monthInAYear = CalendarService.monthsInAYearFromNow();
 		let selectedDates: SelectedDates = new SelectedDates();
+
+		// Cache today's date components to avoid repeated new Date() calls
+		const today = new Date();
+		const todayDate = today.getDate();
+		const todayMonth = today.getMonth();
+		const todayYear = today.getFullYear();
+
+		// Create a Set of holiday timestamps for O(1) lookup instead of O(n)
+		const holidayTimestamps = new Set(holidays.map((h) => h.getTime()));
+
 		for (const weeksInAMonth of monthInAYear) {
 			for (const daysInAWeek of weeksInAMonth) {
 				for (const day of daysInAWeek) {
 					if (day) {
 						this.setWeekendSelection(day, selectedDates);
-						if (holidays.some((holiday) => holiday.getTime() === day.getTime())) {
+						if (holidayTimestamps.has(day.getTime())) {
 							selectedDates._datesSelected.push(
 								new SelectedDate(DayType.CLOSED_DAY, new DateRange<Date>(day, day)),
 							);
 						}
 						if (
-							day.getDate() === new Date().getDate() &&
-							day.getMonth() === new Date().getMonth() &&
-							day.getFullYear() === new Date().getFullYear()
+							day.getDate() === todayDate &&
+							day.getMonth() === todayMonth &&
+							day.getFullYear() === todayYear
 						) {
 							selectedDates._datesSelected.push(
 								new SelectedDate(DayType.TODAY, new DateRange<Date>(day, day)),
@@ -84,12 +98,23 @@ export class CalendarService {
 	}
 
 	getHolidays(): Date[] {
+		// Cache holidays to avoid recalculation
+		const currentYear = new Date().getFullYear();
+		if (this.holidayCacheYear === currentYear && this.holidayTimestampsCache) {
+			return Array.from(this.holidayTimestampsCache).map((ts) => new Date(ts));
+		}
+
 		// Logic to return holidays for the given year
 		const hd = new Holidays('FR', allTypesOptions);
-		const holidays = hd.getHolidays(new Date().getFullYear(), lang);
-		const holidaysPlusOne = hd.getHolidays(new Date().getFullYear() + 1, lang);
+		const holidays = hd.getHolidays(currentYear, lang);
+		const holidaysPlusOne = hd.getHolidays(currentYear + 1, lang);
 		holidays.push(...holidaysPlusOne);
 		let holidaysDate: Date[] = holidays.map((holiday) => new Date(holiday.date));
+
+		// Update cache
+		this.holidayTimestampsCache = new Set(holidaysDate.map((d) => d.getTime()));
+		this.holidayCacheYear = currentYear;
+
 		return holidaysDate;
 	}
 
@@ -533,8 +558,9 @@ export class SelectedDates implements SelectedDateInterface {
 	samediMalin(vacationsNumber: VacationsNumber): void {
 		const now = new Date();
 		now.setHours(0, 0, 0, 0);
+		const nowTime = now.getTime();
 
-		const samedi_ferie = this.datesSelected.filter(
+		const samedi_ferie = this._datesSelected.filter(
 			(date) => date.type === DayType.CLOSED_DAY && date.range.start?.getDay() === 6,
 		);
 
@@ -572,17 +598,17 @@ export class SelectedDates implements SelectedDateInterface {
 
 			// Check if we can apply each strategy (and not in the past)
 			const canApplyTwoBeforeStrategy =
-				twoDaysBefore1 >= now &&
+				twoDaysBefore1.getTime() >= nowTime &&
 				!this.isSelected(twoDaysBefore1) &&
 				!this.isSelected(twoDaysBefore2);
 
 			const canApplyTwoAfterStrategy =
-				twoDaysAfter1 >= now &&
+				twoDaysAfter1.getTime() >= nowTime &&
 				!this.isSelected(twoDaysAfter1) &&
 				!this.isSelected(twoDaysAfter2);
 
 			const canApplyMixedStrategy =
-				oneDayBefore >= now &&
+				oneDayBefore.getTime() >= nowTime &&
 				!this.isSelected(oneDayBefore) &&
 				!this.isSelected(oneDayAfter);
 
@@ -597,6 +623,7 @@ export class SelectedDates implements SelectedDateInterface {
 						new DateRange<Date>(twoDaysBefore1, twoDaysBefore2),
 					),
 				);
+				const heuristic = this.computeHeuristics();
 				strategies.push({
 					apply: () => {
 						this._datesSelected = [...tempDatesBackup];
@@ -609,7 +636,7 @@ export class SelectedDates implements SelectedDateInterface {
 						vacationsNumber.cp -= 2;
 						vacationsNumber.other += 1; // Reward: gain 1 other day
 					},
-					heuristic: this.computeHeuristics(),
+					heuristic: heuristic,
 				});
 				this._datesSelected = [...tempDatesBackup];
 				this.datesSelected = this._datesSelected.slice();
@@ -620,6 +647,7 @@ export class SelectedDates implements SelectedDateInterface {
 				this.push(
 					new SelectedDate(DayType.CP, new DateRange<Date>(twoDaysAfter1, twoDaysAfter2)),
 				);
+				const heuristic = this.computeHeuristics();
 				strategies.push({
 					apply: () => {
 						this._datesSelected = [...tempDatesBackup];
@@ -632,7 +660,7 @@ export class SelectedDates implements SelectedDateInterface {
 						vacationsNumber.cp -= 2;
 						vacationsNumber.other += 1; // Reward: gain 1 other day
 					},
-					heuristic: this.computeHeuristics(),
+					heuristic: heuristic,
 				});
 				this._datesSelected = [...tempDatesBackup];
 				this.datesSelected = this._datesSelected.slice();
@@ -646,6 +674,7 @@ export class SelectedDates implements SelectedDateInterface {
 				this.push(
 					new SelectedDate(DayType.CP, new DateRange<Date>(oneDayAfter, oneDayAfter)),
 				);
+				const heuristic = this.computeHeuristics();
 				strategies.push({
 					apply: () => {
 						this._datesSelected = [...tempDatesBackup];
@@ -664,7 +693,7 @@ export class SelectedDates implements SelectedDateInterface {
 						vacationsNumber.cp -= 2;
 						vacationsNumber.other += 1; // Reward: gain 1 other day
 					},
-					heuristic: this.computeHeuristics(),
+					heuristic: heuristic,
 				});
 				this._datesSelected = [...tempDatesBackup];
 				this.datesSelected = this._datesSelected.slice();
@@ -685,61 +714,79 @@ export class SelectedDates implements SelectedDateInterface {
 		const daysOfYear = CalendarService.monthsInAYearFromNow();
 		const now = new Date();
 		now.setHours(0, 0, 0, 0);
-		daysOfYear.forEach((month) => {
-			month.forEach((week) => {
-				week.forEach((day) => {
-					if (day) {
-						if (day) day.setHours(0, 0, 0, 0);
-						if (day && day < now) {
-							week[week.indexOf(day)] = null;
-						}
-					}
-				});
-			});
-		});
-		const tempDatesBackup = [...this._datesSelected];
-		let strategies: { apply: () => void; heuristic: number; value: Date }[] = [];
+		const nowTime = now.getTime();
+
+		// Preprocess: filter out past days and already selected days in one pass
+		const candidateDays: Date[] = [];
 		for (const month of daysOfYear) {
 			for (const week of month) {
 				for (const day of week) {
-					if (day && !this.isSelected(day)) {
-						this._datesSelected = [...tempDatesBackup];
-						this.datesSelected = this._datesSelected.slice();
-						this.grouping();
-						// mark these days as vacation
-						const startDay = new Date(day);
-						const endDay = new Date(day);
-						this.datesSelected.push(
-							new SelectedDate(vacType, new DateRange<Date>(startDay, endDay)),
-						);
-						strategies.push({
-							apply: () => {
-								this._datesSelected = [...tempDatesBackup];
-								this.push(
-									new SelectedDate(
-										vacType,
-										new DateRange<Date>(startDay, endDay),
-									),
-								);
-							},
-							heuristic: this.computeHeuristics(),
-							value: startDay,
-						});
-						this._datesSelected = [...tempDatesBackup];
-						this.datesSelected = this._datesSelected.slice();
-						this.grouping();
+					if (day) {
+						day.setHours(0, 0, 0, 0);
+						if (day.getTime() >= nowTime && !this.isSelected(day)) {
+							candidateDays.push(day);
+						}
 					}
 				}
 			}
 		}
-		// Apply the strategy with the best heuristic score
-		if (strategies.length > 0) {
-			const bestStrategy = strategies.reduce((best, current) =>
-				current.heuristic > best.heuristic ? current : best,
+
+		// Early exit if no candidates
+		if (candidateDays.length === 0) {
+			return { apply: () => {}, heuristic: -1 };
+		}
+
+		const tempDatesBackup = [...this._datesSelected];
+		let bestStrategy: { apply: () => void; heuristic: number; value: Date } | null = null;
+		let bestHeuristic = -Infinity;
+
+		// Evaluate each candidate day
+		for (const day of candidateDays) {
+			// Reset to backup state
+			this._datesSelected = [...tempDatesBackup];
+			this.datesSelected = this._datesSelected.slice();
+			this.grouping();
+
+			// Mark this day as vacation
+			const startDay = new Date(day);
+			const endDay = new Date(day);
+			this.datesSelected.push(
+				new SelectedDate(vacType, new DateRange<Date>(startDay, endDay)),
 			);
+
+			const heuristic = this.computeHeuristics();
+
+			// Track only if better than current best
+			if (heuristic > bestHeuristic) {
+				bestHeuristic = heuristic;
+				const capturedDay = startDay;
+				bestStrategy = {
+					apply: () => {
+						this._datesSelected = [...tempDatesBackup];
+						this.push(
+							new SelectedDate(
+								vacType,
+								new DateRange<Date>(capturedDay, capturedDay),
+							),
+						);
+					},
+					heuristic: heuristic,
+					value: capturedDay,
+				};
+			}
+		}
+
+		// Restore backup before returning
+		this._datesSelected = [...tempDatesBackup];
+		this.datesSelected = this._datesSelected.slice();
+		this.grouping();
+
+		// Apply best strategy if found
+		if (bestStrategy) {
 			bestStrategy.apply();
 			return bestStrategy;
 		}
+
 		return { apply: () => {}, heuristic: -1 };
 	}
 }

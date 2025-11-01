@@ -18,10 +18,15 @@ export class CalendarMonth implements OnInit {
 	@Input({ required: true })
 	year!: number;
 
+	// Cache "now" as a class property to avoid recreating it on every call
+	private readonly now: Date = (() => {
+		const date = new Date();
+		date.setHours(0, 0, 0, 0);
+		return date;
+	})();
+
 	getNow(): Date {
-		const now = new Date();
-		now.setHours(0, 0, 0, 0);
-		return now;
+		return this.now;
 	}
 
 	currentMonth: Date = new Date();
