@@ -469,27 +469,16 @@ export class SelectedDates implements SelectedDateInterface {
 				return aStart - bStart;
 			});
 
+		const oneDayInMs = 24 * 60 * 60 * 1000;
+
 		// PRIMARY: Optimize adjacency - reduce "little holes" between vacation periods
 		for (let i = 0; i < sorted.length - 1; i++) {
 			const current = sorted[i];
 			const next = sorted[i + 1];
 
-			// Get dates as UTC strings to remove timezone issues
-			const currentEndDate = new Date(current.range.end ?? new Date());
-			const nextStartDate = new Date(next.range.start ?? new Date());
-
-			// Convert to date-only strings (YYYY-MM-DD) to compare calendar days
-			const currentEndString = currentEndDate.toISOString().split('T')[0];
-			const nextStartString = nextStartDate.toISOString().split('T')[0];
-
-			// Parse back to dates at UTC midnight
-			const currentEndDateNormalized = new Date(currentEndString + 'T00:00:00Z');
-			const nextStartDateNormalized = new Date(nextStartString + 'T00:00:00Z');
-
-			const currentEndTime = currentEndDateNormalized.getTime();
-			const nextStartTime = nextStartDateNormalized.getTime();
-
-			const oneDayInMs = 24 * 60 * 60 * 1000;
+			// Use timestamps directly - dates should already be normalized
+			const currentEndTime = current.range.end?.getTime() ?? 0;
+			const nextStartTime = next.range.start?.getTime() ?? 0;
 
 			// Check if adjacent (next day) - this is the best case!
 			if (nextStartTime - currentEndTime === oneDayInMs) {

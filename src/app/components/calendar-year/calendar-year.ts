@@ -16,6 +16,10 @@ import { CalendarSettingsService } from '../../services/calendar-settings-servic
 export class CalendarYear {
 	protected isLoading = signal(true);
 
+	// Cache current month and year to avoid repeated Date object creation
+	private readonly currentMonth = new Date().getMonth();
+	private readonly currentYear = new Date().getFullYear();
+
 	constructor(
 		private userInput: UserInputService,
 		private calendarService: CalendarService,
@@ -45,13 +49,10 @@ export class CalendarYear {
 	protected selectedDates: SelectedDates = new SelectedDates();
 
 	getYear(monthIndex: number): number {
-		const offset = new Date().getMonth() <= monthIndex ? 0 : 1;
-		return new Date().getFullYear() + offset;
+		const offset = this.currentMonth <= monthIndex ? 0 : 1;
+		return this.currentYear + offset;
 	}
 
-	// months starting from actual date
-	protected months: number[] = Array.from(
-		{ length: 12 },
-		(_, i) => (new Date().getMonth() + i) % 12,
-	);
+	// months starting from actual date - cache this array
+	protected months: number[] = Array.from({ length: 12 }, (_, i) => (this.currentMonth + i) % 12);
 }
