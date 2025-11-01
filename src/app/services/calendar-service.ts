@@ -292,6 +292,9 @@ export class SelectedDates implements SelectedDateInterface {
 	private minDate: Date | null = null;
 	private maxDate: Date | null = null;
 
+	// Constant to indicate no valid strategy was found
+	private static readonly NO_VALID_STRATEGY_HEURISTIC = -1;
+
 	update(): void {
 		this.datesSelected = this._datesSelected.slice();
 		this.grouping();
@@ -524,21 +527,21 @@ export class SelectedDates implements SelectedDateInterface {
 		if (calendarSettingsService.samediMalin()) this.samediMalin(vacationsNumber);
 		while (vacationsNumber.cp > 0) {
 			const result = this.lookForVacation(DayType.CP);
-			if (result.heuristic === -1) {
+			if (result.heuristic === SelectedDates.NO_VALID_STRATEGY_HEURISTIC) {
 				break;
 			}
 			vacationsNumber.cp -= 1;
 		}
 		while (vacationsNumber.rtt > 0) {
 			const result = this.lookForVacation(DayType.RTT);
-			if (result.heuristic === -1) {
+			if (result.heuristic === SelectedDates.NO_VALID_STRATEGY_HEURISTIC) {
 				break;
 			}
 			vacationsNumber.rtt -= 1;
 		}
 		while (vacationsNumber.other > 0) {
 			const result = this.lookForVacation(DayType.OTHER);
-			if (result.heuristic === -1) {
+			if (result.heuristic === SelectedDates.NO_VALID_STRATEGY_HEURISTIC) {
 				break;
 			}
 			vacationsNumber.other -= 1;
@@ -723,7 +726,7 @@ export class SelectedDates implements SelectedDateInterface {
 
 		// Early exit if no candidates
 		if (candidateDays.length === 0) {
-			return { apply: () => {}, heuristic: -1 };
+			return { apply: () => {}, heuristic: SelectedDates.NO_VALID_STRATEGY_HEURISTIC };
 		}
 
 		const tempDatesBackup = [...this._datesSelected];
@@ -773,6 +776,6 @@ export class SelectedDates implements SelectedDateInterface {
 			return bestStrategy;
 		}
 
-		return { apply: () => {}, heuristic: -1 };
+		return { apply: () => {}, heuristic: SelectedDates.NO_VALID_STRATEGY_HEURISTIC };
 	}
 }
