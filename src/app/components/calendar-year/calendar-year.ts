@@ -1,4 +1,4 @@
-import { Component, effect, signal } from '@angular/core';
+import { Component, effect, signal, inject } from '@angular/core';
 import { UserInputService } from '../../services/user-input-service';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { CalendarMonth } from '../calendar-month/calendar-month';
@@ -6,6 +6,7 @@ import { CalendarService, SelectedDates } from '../../services/calendar-service'
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { CalendarSettingsService } from '../../services/calendar-settings-service';
+import { DateCacheService } from '../../services/date-cache.service';
 
 @Component({
 	selector: 'app-calendar-year',
@@ -14,17 +15,23 @@ import { CalendarSettingsService } from '../../services/calendar-settings-servic
 	styleUrl: './calendar-year.scss',
 })
 export class CalendarYear {
+	private dateCache = inject(DateCacheService);
+	private userInput = inject(UserInputService);
+	private calendarService = inject(CalendarService);
+	private calendarSettingsService = inject(CalendarSettingsService);
+
 	protected isLoading = signal(true);
 
-	// Cache current month and year to avoid repeated Date object creation
-	private readonly currentMonth = new Date().getMonth();
-	private readonly currentYear = new Date().getFullYear();
+	// Use DateCacheService instead of creating Date objects
+	private get currentMonth() {
+		return this.dateCache.getCurrentMonth();
+	}
 
-	constructor(
-		private userInput: UserInputService,
-		private calendarService: CalendarService,
-		private calendarSettingsService: CalendarSettingsService,
-	) {
+	private get currentYear() {
+		return this.dateCache.getCurrentYear();
+	}
+
+	constructor() {
 		effect(() => {
 			this.selectedDates = this.calendarService.getSelectedDatesForYear();
 			const vacationData = this.userInput.vacationNumberSignal();

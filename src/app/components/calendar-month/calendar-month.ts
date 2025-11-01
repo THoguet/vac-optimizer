@@ -1,7 +1,8 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { CalendarService, Month, monthNames, SelectedDates } from '../../services/calendar-service';
 import { MatTooltip } from '@angular/material/tooltip';
 import { CalendarSettingsService } from '../../services/calendar-settings-service';
+import { DateCacheService } from '../../services/date-cache.service';
 
 @Component({
 	selector: 'app-calendar-month',
@@ -10,7 +11,8 @@ import { CalendarSettingsService } from '../../services/calendar-settings-servic
 	styleUrl: './calendar-month.scss',
 })
 export class CalendarMonth implements OnInit {
-	constructor(protected calendarSettingsService: CalendarSettingsService) {}
+	protected calendarSettingsService = inject(CalendarSettingsService);
+	private dateCache = inject(DateCacheService);
 
 	@Input({ required: true })
 	monthIndex!: number;
@@ -18,18 +20,9 @@ export class CalendarMonth implements OnInit {
 	@Input({ required: true })
 	year!: number;
 
-	// Cache "now" as a class property to avoid recreating it on every call
-	// Note: This value is cached at component initialization and won't update if the day changes
-	// while the component is still mounted. This is acceptable for this use case since the app
-	// is primarily used within a single day session.
-	private readonly now: Date = (() => {
-		const date = new Date();
-		date.setHours(0, 0, 0, 0);
-		return date;
-	})();
-
+	// Use DateCacheService instead of creating Date objects
 	getNow(): Date {
-		return this.now;
+		return this.dateCache.getNow();
 	}
 
 	currentMonth: Date = new Date();

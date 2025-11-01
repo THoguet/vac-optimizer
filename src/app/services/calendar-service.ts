@@ -1,10 +1,11 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { DateRange } from '@angular/material/datepicker';
 import Holidays, { HolidaysTypes } from 'date-holidays';
 import dayjs from 'dayjs';
 import weekOfYear from 'dayjs/plugin/weekOfYear';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import { CalendarSettingsService } from './calendar-settings-service';
+import { DateCacheService } from './date-cache.service';
 
 dayjs.extend(weekOfYear);
 dayjs.extend(isoWeek);
@@ -19,6 +20,8 @@ const allTypesOptions: HolidaysTypes.Options = {
 	providedIn: 'root',
 })
 export class CalendarService {
+	private dateCache = inject(DateCacheService);
+
 	// Cache for holiday timestamps
 	private holidayTimestampsCache: Set<number> | null = null;
 	private holidayCacheYear: number | null = null;
@@ -36,11 +39,12 @@ export class CalendarService {
 		const monthInAYear = CalendarService.monthsInAYearFromNow();
 		let selectedDates: SelectedDates = new SelectedDates();
 
-		// Cache today's date components to avoid repeated new Date() calls
-		const today = new Date();
-		const todayDate = today.getDate();
-		const todayMonth = today.getMonth();
-		const todayYear = today.getFullYear();
+		// Use DateCacheService to get today's date components
+		const {
+			date: todayDate,
+			month: todayMonth,
+			year: todayYear,
+		} = this.dateCache.getTodayComponents();
 
 		// Create a Set of holiday timestamps for O(1) lookup instead of O(n)
 		const holidayTimestamps = new Set(holidays.map((h) => h.getTime()));
@@ -99,7 +103,7 @@ export class CalendarService {
 
 	getHolidays(): Date[] {
 		// Cache holidays to avoid recalculation
-		const currentYear = new Date().getFullYear();
+		const currentYear = this.dateCache.getCurrentYear();
 		if (this.holidayCacheYear === currentYear && this.holidayTimestampsCache) {
 			// Return timestamps directly for efficient lookup
 			return Array.from(this.holidayTimestampsCache).map((ts) => new Date(ts));
@@ -164,9 +168,10 @@ export class CalendarService {
 	}
 
 	static monthsInAYearFromNow(): Year {
+		const dateCache = inject(DateCacheService);
 		const months: Year = [];
-		const currentMonthIndex = new Date().getMonth();
-		const currentYear = new Date().getFullYear();
+		const currentMonthIndex = dateCache.getCurrentMonth();
+		const currentYear = dateCache.getCurrentYear();
 		for (let i = 0; i < 12; i++) {
 			const monthIndex = (currentMonthIndex + i) % 12;
 			const year = currentYear + Math.floor((currentMonthIndex + i) / 12);
