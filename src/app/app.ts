@@ -5,6 +5,7 @@ import { MatDivider } from '@angular/material/divider';
 import { UserInput } from './components/user-input/user-input';
 import { CalendarYear } from './components/calendar-year/calendar-year';
 import { DarkLightModeButton } from './components/dark-light-mode-button/dark-light-mode-button';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
 	selector: 'app-root',
@@ -15,6 +16,7 @@ import { DarkLightModeButton } from './components/dark-light-mode-button/dark-li
 		CalendarYear,
 		DarkLightModeButton,
 		DarkLightModeButton,
+		MatIcon,
 	],
 	templateUrl: './app.html',
 	styleUrl: './app.scss',

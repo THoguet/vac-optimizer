@@ -217,6 +217,7 @@ export class SelectedDate implements SelectedDateInterface {
 
 	isSelected(date: Date): boolean {
 		return (
+			this.type !== DayType.TODAY &&
 			this.range.start !== null &&
 			this.range.end !== null &&
 			date >= this.range.start &&
@@ -262,6 +263,9 @@ export class SelectedDates implements SelectedDateInterface {
 	_datesSelected: SelectedDate[] = [];
 	datesSelected: SelectedDate[] = [];
 
+	private minDate: Date | null = null;
+	private maxDate: Date | null = null;
+
 	update(): void {
 		this.datesSelected = this._datesSelected.slice();
 		this.grouping();
@@ -270,7 +274,28 @@ export class SelectedDates implements SelectedDateInterface {
 	push(selectedDate: SelectedDate) {
 		this._datesSelected.push(selectedDate);
 		this.datesSelected = this._datesSelected.slice();
+		this.updateMinMaxDates();
 		this.grouping();
+	}
+
+	private updateMinMaxDates(): void {
+		if (this._datesSelected.length === 0) {
+			this.minDate = null;
+			this.maxDate = null;
+			return;
+		}
+
+		this.minDate = this._datesSelected.reduce((min, date) => {
+			if (!date.range.start) return min;
+			if (!min) return date.range.start;
+			return date.range.start < min ? date.range.start : min;
+		}, this._datesSelected[0].range.start);
+
+		this.maxDate = this._datesSelected.reduce((max, date) => {
+			if (!date.range.end) return max;
+			if (!max) return date.range.end;
+			return date.range.end > max ? date.range.end : max;
+		}, this._datesSelected[0].range.end);
 	}
 
 	// make a "mother group" with type = null when two or more groups are adjacent or overlapping; keep the children groups
@@ -278,6 +303,8 @@ export class SelectedDates implements SelectedDateInterface {
 		if (this._datesSelected.length <= 1) {
 			return;
 		}
+
+		const oneDayInMs = 24 * 60 * 60 * 1000;
 
 		// Sort dates by start date
 		const sorted = [...this._datesSelected].sort((a, b) => {
@@ -289,25 +316,23 @@ export class SelectedDates implements SelectedDateInterface {
 		// Group adjacent or overlapping dates
 		const groups: SelectedDate[][] = [];
 		let currentGroup: SelectedDate[] = [sorted[0]];
+		let currentGroupMaxEnd = sorted[0].range.end?.getTime() ?? 0;
 
 		for (let i = 1; i < sorted.length; i++) {
 			const current = sorted[i];
-			const previous = sorted[i - 1];
-
-			const prevEnd = previous.range.end?.getTime() ?? 0;
 			const currStart = current.range.start?.getTime() ?? 0;
+			const currEnd = current.range.end?.getTime() ?? 0;
 
-			// Check if dates are adjacent (next day) or overlapping
-			const oneDayInMs = 24 * 60 * 60 * 1000;
-			const isAdjacent = currStart - prevEnd <= oneDayInMs;
-
-			if (isAdjacent) {
+			// Check if current date is adjacent or overlapping with the maximum end of the current group
+			if (currStart - currentGroupMaxEnd <= oneDayInMs) {
 				currentGroup.push(current);
+				currentGroupMaxEnd = Math.max(currentGroupMaxEnd, currEnd);
 			} else {
 				if (currentGroup.length > 1) {
 					groups.push(currentGroup);
 				}
 				currentGroup = [current];
+				currentGroupMaxEnd = Math.max(currentGroupMaxEnd, currEnd);
 			}
 		}
 
@@ -316,26 +341,19 @@ export class SelectedDates implements SelectedDateInterface {
 			groups.push(currentGroup);
 		}
 
-		// Create mother groups and rebuild datesSelected
+		// Create mother groups and add to result
 		const result: SelectedDate[] = [...this._datesSelected];
 
 		for (const group of groups) {
-			const groupStart = group.reduce((min, date) => {
-				const start = date.range.start?.getTime() ?? 0;
-				return min === 0 ? start : Math.min(min, start);
-			}, 0);
+			const groupStart = Math.min(...group.map((d) => d.range.start?.getTime() ?? Infinity));
+			const groupEnd = Math.max(...group.map((d) => d.range.end?.getTime() ?? 0));
 
-			const groupEnd = group.reduce((max, date) => {
-				const end = date.range.end?.getTime() ?? 0;
-				return Math.max(max, end);
-			}, 0);
-
-			const motherGroup = new SelectedDate(
-				null,
-				new DateRange<Date>(new Date(groupStart), new Date(groupEnd)),
+			result.push(
+				new SelectedDate(
+					null,
+					new DateRange<Date>(new Date(groupStart), new Date(groupEnd)),
+				),
 			);
-
-			result.push(motherGroup);
 		}
 
 		this.datesSelected = result;
@@ -513,6 +531,9 @@ export class SelectedDates implements SelectedDateInterface {
 	}
 
 	samediMalin(vacationsNumber: VacationsNumber): void {
+		const now = new Date();
+		now.setHours(0, 0, 0, 0);
+
 		const samedi_ferie = this.datesSelected.filter(
 			(date) => date.type === DayType.CLOSED_DAY && date.range.start?.getDay() === 6,
 		);
@@ -549,15 +570,21 @@ export class SelectedDates implements SelectedDateInterface {
 			const oneDayAfter = new Date(sundayDate);
 			oneDayAfter.setDate(sundayDate.getDate() + 1);
 
-			// Check if we can apply each strategy
+			// Check if we can apply each strategy (and not in the past)
 			const canApplyTwoBeforeStrategy =
-				!this.isSelected(twoDaysBefore1) && !this.isSelected(twoDaysBefore2);
+				twoDaysBefore1 >= now &&
+				!this.isSelected(twoDaysBefore1) &&
+				!this.isSelected(twoDaysBefore2);
 
 			const canApplyTwoAfterStrategy =
-				!this.isSelected(twoDaysAfter1) && !this.isSelected(twoDaysAfter2);
+				twoDaysAfter1 >= now &&
+				!this.isSelected(twoDaysAfter1) &&
+				!this.isSelected(twoDaysAfter2);
 
 			const canApplyMixedStrategy =
-				!this.isSelected(oneDayBefore) && !this.isSelected(oneDayAfter);
+				oneDayBefore >= now &&
+				!this.isSelected(oneDayBefore) &&
+				!this.isSelected(oneDayAfter);
 
 			// Test all applicable strategies and choose the one with the best heuristic score
 			const strategies: { apply: () => void; heuristic: number }[] = [];
