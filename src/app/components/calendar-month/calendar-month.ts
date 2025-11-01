@@ -19,6 +19,9 @@ export class CalendarMonth implements OnInit {
 	year!: number;
 
 	// Cache "now" as a class property to avoid recreating it on every call
+	// Note: This value is cached at component initialization and won't update if the day changes
+	// while the component is still mounted. This is acceptable for this use case since the app
+	// is primarily used within a single day session.
 	private readonly now: Date = (() => {
 		const date = new Date();
 		date.setHours(0, 0, 0, 0);

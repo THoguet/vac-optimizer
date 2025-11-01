@@ -101,6 +101,7 @@ export class CalendarService {
 		// Cache holidays to avoid recalculation
 		const currentYear = new Date().getFullYear();
 		if (this.holidayCacheYear === currentYear && this.holidayTimestampsCache) {
+			// Return timestamps directly for efficient lookup
 			return Array.from(this.holidayTimestampsCache).map((ts) => new Date(ts));
 		}
 
@@ -109,7 +110,7 @@ export class CalendarService {
 		const holidays = hd.getHolidays(currentYear, lang);
 		const holidaysPlusOne = hd.getHolidays(currentYear + 1, lang);
 		holidays.push(...holidaysPlusOne);
-		let holidaysDate: Date[] = holidays.map((holiday) => new Date(holiday.date));
+		const holidaysDate: Date[] = holidays.map((holiday) => new Date(holiday.date));
 
 		// Update cache
 		this.holidayTimestampsCache = new Set(holidaysDate.map((d) => d.getTime()));
@@ -736,19 +737,15 @@ export class SelectedDates implements SelectedDateInterface {
 			this.datesSelected = this._datesSelected.slice();
 			this.grouping();
 
-			// Mark this day as vacation
-			const startDay = new Date(day);
-			const endDay = new Date(day);
-			this.datesSelected.push(
-				new SelectedDate(vacType, new DateRange<Date>(startDay, endDay)),
-			);
+			// Mark this day as vacation (reuse the day object since it's already normalized)
+			this.datesSelected.push(new SelectedDate(vacType, new DateRange<Date>(day, day)));
 
 			const heuristic = this.computeHeuristics();
 
 			// Track only if better than current best
 			if (heuristic > bestHeuristic) {
 				bestHeuristic = heuristic;
-				const capturedDay = startDay;
+				const capturedDay = day;
 				bestStrategy = {
 					apply: () => {
 						this._datesSelected = [...tempDatesBackup];
