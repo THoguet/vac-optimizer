@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, effect } from '@angular/core';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { UserInputService } from '../../services/user-input-service';
 import { VacationsNumber } from '../../services/calendar-service';
 import { debounceTime, takeUntil, Subject } from 'rxjs';

@@ -3,22 +3,21 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { CalendarMonth } from './calendar-month';
 
 describe('CalendarMonth', () => {
-  let component: CalendarMonth;
-  let fixture: ComponentFixture<CalendarMonth>;
+	let component: CalendarMonth;
+	let fixture: ComponentFixture<CalendarMonth>;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [CalendarMonth],
-      providers: [provideZonelessChangeDetection()]
-    })
-    .compileComponents();
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
+			imports: [CalendarMonth],
+			providers: [provideZonelessChangeDetection()],
+		}).compileComponents();
 
-    fixture = TestBed.createComponent(CalendarMonth);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
+		fixture = TestBed.createComponent(CalendarMonth);
+		component = fixture.componentInstance;
+		fixture.detectChanges();
+	});
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
+	it('should create', () => {
+		expect(component).toBeTruthy();
+	});
 });
