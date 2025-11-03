@@ -89,6 +89,8 @@ jobs:
 
             - name: Build production bundle
               run: npm run build -- --configuration production
+              env:
+                  NG_BUILD_CACHE: '.angular/cache'
 
             - name: Check bundle size
               run: |
