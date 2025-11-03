@@ -66,5 +66,10 @@
 }
 
 :root {
-	@include mat.progress-spinner-overrides((size: 0.5rem, active-indicator-width: 0.25rem));
+	@include mat.progress-spinner-overrides(
+		(
+			size: 0.5rem,
+			active-indicator-width: 0.25rem,
+		)
+	);
 }
