@@ -1,4 +1,4 @@
-import { Component, effect, signal } from '@angular/core';
+import { Component, effect, signal, inject } from '@angular/core';
 import { UserInputService } from '../../services/user-input-service';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { CalendarMonth } from '../calendar-month/calendar-month';
@@ -6,6 +6,7 @@ import { CalendarService, SelectedDates } from '../../services/calendar-service'
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { CalendarSettingsService } from '../../services/calendar-settings-service';
+import { DateCacheService } from '../../services/date-cache.service';
 
 @Component({
 	selector: 'app-calendar-year',
@@ -14,13 +15,23 @@ import { CalendarSettingsService } from '../../services/calendar-settings-servic
 	styleUrl: './calendar-year.scss',
 })
 export class CalendarYear {
+	private dateCache = inject(DateCacheService);
+	private userInput = inject(UserInputService);
+	private calendarService = inject(CalendarService);
+	private calendarSettingsService = inject(CalendarSettingsService);
+
 	protected isLoading = signal(true);
 
-	constructor(
-		private userInput: UserInputService,
-		private calendarService: CalendarService,
-		private calendarSettingsService: CalendarSettingsService,
-	) {
+	// Use DateCacheService instead of creating Date objects
+	private get currentMonth() {
+		return this.dateCache.getCurrentMonth();
+	}
+
+	private get currentYear() {
+		return this.dateCache.getCurrentYear();
+	}
+
+	constructor() {
 		effect(() => {
 			this.selectedDates = this.calendarService.getSelectedDatesForYear();
 			const vacationData = this.userInput.vacationNumberSignal();
@@ -45,13 +56,10 @@ export class CalendarYear {
 	protected selectedDates: SelectedDates = new SelectedDates();
 
 	getYear(monthIndex: number): number {
-		const offset = new Date().getMonth() <= monthIndex ? 0 : 1;
-		return new Date().getFullYear() + offset;
+		const offset = this.currentMonth <= monthIndex ? 0 : 1;
+		return this.currentYear + offset;
 	}
 
-	// months starting from actual date
-	protected months: number[] = Array.from(
-		{ length: 12 },
-		(_, i) => (new Date().getMonth() + i) % 12,
-	);
+	// months starting from actual date - cache this array
+	protected months: number[] = Array.from({ length: 12 }, (_, i) => (this.currentMonth + i) % 12);
 }

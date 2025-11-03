@@ -1,7 +1,8 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { CalendarService, Month, monthNames, SelectedDates } from '../../services/calendar-service';
 import { MatTooltip } from '@angular/material/tooltip';
 import { CalendarSettingsService } from '../../services/calendar-settings-service';
+import { DateCacheService } from '../../services/date-cache.service';
 
 @Component({
 	selector: 'app-calendar-month',
@@ -10,7 +11,8 @@ import { CalendarSettingsService } from '../../services/calendar-settings-servic
 	styleUrl: './calendar-month.scss',
 })
 export class CalendarMonth implements OnInit {
-	constructor(protected calendarSettingsService: CalendarSettingsService) {}
+	protected calendarSettingsService = inject(CalendarSettingsService);
+	private dateCache = inject(DateCacheService);
 
 	@Input({ required: true })
 	monthIndex!: number;
@@ -18,10 +20,9 @@ export class CalendarMonth implements OnInit {
 	@Input({ required: true })
 	year!: number;
 
+	// Use DateCacheService instead of creating Date objects
 	getNow(): Date {
-		const now = new Date();
-		now.setHours(0, 0, 0, 0);
-		return now;
+		return this.dateCache.getNow();
 	}
 
 	currentMonth: Date = new Date();
