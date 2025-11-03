@@ -4,7 +4,7 @@
 		<p>Configure your calendar settings here.</p>
 	</div>
 	<div style="display: flex; flex-direction: column; gap: 1rem">
-		@for (signal of calendarSettingsService.settings; track $index) {
+		@for (signal of calendarSettingsService.settings; track signal.id) {
 			<div style="align-self: flex-start">
 				<mat-slide-toggle
 					[id]="signal.id"
