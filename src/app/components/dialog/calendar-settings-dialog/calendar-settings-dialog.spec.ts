@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { provideZonelessChangeDetection } from '@angular/core';
+import { MatDialogRef } from '@angular/material/dialog';
 import { CalendarSettingsDialog } from './calendar-settings-dialog';
 
 describe('CalendarSettingsDialog', () => {
@@ -8,7 +9,16 @@ describe('CalendarSettingsDialog', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CalendarSettingsDialog]
+      imports: [CalendarSettingsDialog],
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: MatDialogRef,
+          useValue: {
+            close: jasmine.createSpy('close')
+          }
+        }
+      ]
     })
     .compileComponents();
 
@@ -19,5 +29,14 @@ describe('CalendarSettingsDialog', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should have calendar settings service', () => {
+    expect(component['calendarSettingsService']).toBeDefined();
+  });
+
+  it('should close dialog when closeDialog is called', () => {
+    component.closeDialog();
+    expect(component.dialogRef.close).toHaveBeenCalled();
   });
 });

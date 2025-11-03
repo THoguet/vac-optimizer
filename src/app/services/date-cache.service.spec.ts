@@ -1,11 +1,14 @@
 import { TestBed } from '@angular/core/testing';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { DateCacheService } from './date-cache.service';
 
 describe('DateCacheService', () => {
 	let service: DateCacheService;
 
 	beforeEach(() => {
-		TestBed.configureTestingModule({});
+		TestBed.configureTestingModule({
+			providers: [provideZonelessChangeDetection()],
+		});
 		service = TestBed.inject(DateCacheService);
 	});
 
@@ -42,5 +45,19 @@ describe('DateCacheService', () => {
 		service.clearCache();
 		const year2 = service.getCurrentYear();
 		expect(year1).toBe(year2); // Values should be the same even after clearing
+	});
+
+	it('should return today with time normalized to 00:00:00.000', () => {
+		const today = service.getToday();
+		expect(today.getHours()).toBe(0);
+		expect(today.getMinutes()).toBe(0);
+		expect(today.getSeconds()).toBe(0);
+		expect(today.getMilliseconds()).toBe(0);
+	});
+
+	it('should return getNow() same as getToday()', () => {
+		const now = service.getNow();
+		const today = service.getToday();
+		expect(now).toBe(today);
 	});
 });

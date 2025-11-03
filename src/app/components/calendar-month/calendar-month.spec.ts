@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { provideZonelessChangeDetection } from '@angular/core';
 import { CalendarMonth } from './calendar-month';
 
 describe('CalendarMonth', () => {
@@ -8,7 +8,8 @@ describe('CalendarMonth', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CalendarMonth]
+      imports: [CalendarMonth],
+      providers: [provideZonelessChangeDetection()]
     })
     .compileComponents();
 

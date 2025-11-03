@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { provideZonelessChangeDetection } from '@angular/core';
 import { CalendarSettings } from './calendar-settings';
 
 describe('CalendarSettings', () => {
@@ -8,7 +8,8 @@ describe('CalendarSettings', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CalendarSettings]
+      imports: [CalendarSettings],
+      providers: [provideZonelessChangeDetection()]
     })
     .compileComponents();
 

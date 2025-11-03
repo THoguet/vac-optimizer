@@ -46,6 +46,7 @@ export class CalendarYear {
 					this.selectedDates.optimizeVacations(
 						{ ...vacationData },
 						this.calendarSettingsService,
+						this.calendarService,
 					);
 				}
 				this.isLoading.set(false);

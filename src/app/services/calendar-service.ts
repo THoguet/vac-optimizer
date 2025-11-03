@@ -36,7 +36,7 @@ export class CalendarService {
 
 	getSelectedDatesForYear(): SelectedDates {
 		const holidays = this.getHolidays();
-		const monthInAYear = CalendarService.monthsInAYearFromNow();
+		const monthInAYear = this.monthsInAYearFromNow();
 		let selectedDates: SelectedDates = new SelectedDates();
 
 		// Use DateCacheService to get today's date components
@@ -167,15 +167,14 @@ export class CalendarService {
 		return months;
 	}
 
-	static monthsInAYearFromNow(): Year {
-		const dateCache = inject(DateCacheService);
+	monthsInAYearFromNow(): Year {
 		const months: Year = [];
-		const currentMonthIndex = dateCache.getCurrentMonth();
-		const currentYear = dateCache.getCurrentYear();
+		const currentMonthIndex = this.dateCache.getCurrentMonth();
+		const currentYear = this.dateCache.getCurrentYear();
 		for (let i = 0; i < 12; i++) {
 			const monthIndex = (currentMonthIndex + i) % 12;
 			const year = currentYear + Math.floor((currentMonthIndex + i) / 12);
-			months.push(this.weeksInMonth(monthIndex, year));
+			months.push(CalendarService.weeksInMonth(monthIndex, year));
 		}
 		return months;
 	}
@@ -539,24 +538,25 @@ export class SelectedDates implements SelectedDateInterface {
 	optimizeVacations(
 		vacationsNumber: VacationsNumber,
 		calendarSettingsService: CalendarSettingsService,
+		calendarService: CalendarService,
 	): void {
 		if (calendarSettingsService.samediMalin()) this.samediMalin(vacationsNumber);
 		while (vacationsNumber.cp > 0) {
-			const result = this.lookForVacation(DayType.CP);
+			const result = this.lookForVacation(DayType.CP, calendarService);
 			if (result.heuristic === SelectedDates.NO_VALID_STRATEGY_HEURISTIC) {
 				break;
 			}
 			vacationsNumber.cp -= 1;
 		}
 		while (vacationsNumber.rtt > 0) {
-			const result = this.lookForVacation(DayType.RTT);
+			const result = this.lookForVacation(DayType.RTT, calendarService);
 			if (result.heuristic === SelectedDates.NO_VALID_STRATEGY_HEURISTIC) {
 				break;
 			}
 			vacationsNumber.rtt -= 1;
 		}
 		while (vacationsNumber.other > 0) {
-			const result = this.lookForVacation(DayType.OTHER);
+			const result = this.lookForVacation(DayType.OTHER, calendarService);
 			if (result.heuristic === SelectedDates.NO_VALID_STRATEGY_HEURISTIC) {
 				break;
 			}
@@ -719,8 +719,8 @@ export class SelectedDates implements SelectedDateInterface {
 		}
 	}
 
-	lookForVacation(vacType: DayType): { apply: () => void; heuristic: number } {
-		const daysOfYear = CalendarService.monthsInAYearFromNow();
+	lookForVacation(vacType: DayType, calendarService: CalendarService): { apply: () => void; heuristic: number } {
+		const daysOfYear = calendarService.monthsInAYearFromNow();
 		const now = new Date();
 		now.setHours(0, 0, 0, 0);
 		const nowTime = now.getTime();
