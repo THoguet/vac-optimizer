@@ -540,7 +540,7 @@ export class SelectedDates implements SelectedDateInterface {
 		calendarSettingsService: CalendarSettingsService,
 		calendarService: CalendarService,
 	): void {
-		if (calendarSettingsService.samediMalin()) this.samediMalin(vacationsNumber);
+		if (calendarSettingsService.get('samediMalin')()) this.samediMalin(vacationsNumber);
 		while (vacationsNumber.cp > 0) {
 			const result = this.lookForVacation(DayType.CP, calendarService);
 			if (result.heuristic === SelectedDates.NO_VALID_STRATEGY_HEURISTIC) {
