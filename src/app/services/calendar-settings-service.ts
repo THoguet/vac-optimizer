@@ -37,7 +37,12 @@ export class CalendarSettingsService {
 	}
 
 	get(id: string): WritableSignal<boolean> {
-		return this.signals.get(id)!;
+		const signal = this.signals.get(id);
+		if (signal) {
+			return signal;
+		}
+		// Return a default signal if the ID is invalid
+		return storedSignal(`calendarSettings.${id}`, false);
 	}
 
 	get settingsArray() {
