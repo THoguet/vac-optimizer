@@ -57,7 +57,9 @@ export function storedSignal<T>(key: string, initialValue: T, debounceMs = 300):
 			);
 			try {
 				localStorage.removeItem(key);
-			} catch {}
+			} catch {
+				// Ignore removal errors
+			}
 		}
 	}
 
