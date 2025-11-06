@@ -73,10 +73,17 @@ export function storedSignal<T>(
 	const s = signal(parsedValue);
 
 	let timeoutId: ReturnType<typeof setTimeout> | null = null;
+	let isFirstRun = true;
 
 	runInInjectionContext(injector, () => {
 		effect(() => {
 			const value = s();
+
+			// Skip the first execution to avoid writing back what we just read
+			if (isFirstRun) {
+				isFirstRun = false;
+				return;
+			}
 
 			// Clear any pending timeout
 			if (timeoutId !== null) {
