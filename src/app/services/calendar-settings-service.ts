@@ -1,4 +1,4 @@
-import { Injectable, WritableSignal } from '@angular/core';
+import { Injectable, WritableSignal, inject, Injector } from '@angular/core';
 import { storedSignal } from '../shared/utils/stored-signal';
 
 interface SettingDefinition {
@@ -10,6 +10,8 @@ interface SettingDefinition {
 	providedIn: 'root',
 })
 export class CalendarSettingsService {
+	private readonly injector = inject(Injector);
+
 	private readonly definitions = new Map<string, SettingDefinition>([
 		[
 			'showWeekNumbers',
@@ -38,7 +40,7 @@ export class CalendarSettingsService {
 	constructor() {
 		for (const [id, def] of this.definitions) {
 			const storageKey = `calendarSettings.${id}`;
-			this.signals.set(id, storedSignal(storageKey, def.defaultValue));
+			this.signals.set(id, storedSignal(storageKey, def.defaultValue, this.injector));
 		}
 
 		this.settingsArray = Array.from(this.definitions.entries()).map(([id, def]) => ({
