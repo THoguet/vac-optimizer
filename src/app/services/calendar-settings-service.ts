@@ -1,5 +1,5 @@
-import { storedSignal } from '../shared/utils/stored-signal.';
 import { Injectable, WritableSignal } from '@angular/core';
+import { storedSignal } from '../shared/utils/stored-signal';
 
 interface SettingDefinition {
 	defaultValue: boolean;
@@ -29,28 +29,27 @@ export class CalendarSettingsService {
 
 	private readonly signals = new Map<string, WritableSignal<boolean>>();
 
+	readonly settingsArray: ReadonlyArray<{
+		id: string;
+		signal: WritableSignal<boolean>;
+		description: string;
+	}>;
+
 	constructor() {
 		for (const [id, def] of this.definitions) {
 			const storageKey = `calendarSettings.${id}`;
 			this.signals.set(id, storedSignal(storageKey, def.defaultValue));
 		}
-	}
 
-	get(id: string): WritableSignal<boolean> {
-		const signal = this.signals.get(id);
-		if (signal) {
-			return signal;
-		}
-		// Return a default signal if the ID is invalid
-		return storedSignal(`calendarSettings.${id}`, false);
-	}
-
-	get settingsArray() {
-		return Array.from(this.definitions.entries()).map(([id, def]) => ({
+		this.settingsArray = Array.from(this.definitions.entries()).map(([id, def]) => ({
 			id,
 			signal: this.signals.get(id)!,
 			description: def.description,
 		}));
+	}
+
+	get(id: string): WritableSignal<boolean> {
+		return this.signals.get(id)!;
 	}
 
 	getDescription(id: string): string {
