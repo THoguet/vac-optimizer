@@ -1,5 +1,11 @@
-import { Injectable } from '@angular/core';
 import { storedSignal } from '../shared/utils/stored-signal.';
+import { Injectable, WritableSignal } from '@angular/core';
+
+interface CalendarSetting {
+	signal: WritableSignal<boolean>;
+	id: string;
+	description: string;
+}
 
 @Injectable({
 	providedIn: 'root',
@@ -7,4 +13,17 @@ import { storedSignal } from '../shared/utils/stored-signal.';
 export class CalendarSettingsService {
 	readonly showWeekNumbers = storedSignal('calendarSettings.showWeekNumbers', false);
 	readonly samediMalin = storedSignal('calendarSettings.samediMalin', true);
+
+	readonly settings: readonly CalendarSetting[] = [
+		{
+			signal: this.showWeekNumbers,
+			id: 'showWeekNumbers',
+			description: 'Afficher les numéros de semaine',
+		},
+		{
+			signal: this.samediMalin,
+			id: 'samediMalin',
+			description: 'Activer le Samedi Malin',
+		},
+	];
 }

@@ -1,11 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import {
-	CalendarService,
-	DayType,
-	SelectedDate,
-	SelectedDates,
-} from './calendar-service';
+import { CalendarService, DayType, SelectedDate, SelectedDates } from './calendar-service';
 import { DateRange } from '@angular/material/datepicker';
 
 describe('CalendarService', () => {
@@ -111,47 +106,32 @@ describe('CalendarService', () => {
 describe('SelectedDate', () => {
 	it('should check if date is selected', () => {
 		const date = new Date(2024, 0, 1);
-		const selectedDate = new SelectedDate(
-			DayType.CP,
-			new DateRange<Date>(date, date),
-		);
+		const selectedDate = new SelectedDate(DayType.CP, new DateRange<Date>(date, date));
 		expect(selectedDate.isSelected(date)).toBe(true);
 	});
 
 	it('should check if date is start', () => {
 		const date = new Date(2024, 0, 1);
-		const selectedDate = new SelectedDate(
-			DayType.CP,
-			new DateRange<Date>(date, date),
-		);
+		const selectedDate = new SelectedDate(DayType.CP, new DateRange<Date>(date, date));
 		expect(selectedDate.isStart(date)).toBe(true);
 	});
 
 	it('should check if date is end', () => {
 		const date = new Date(2024, 0, 1);
-		const selectedDate = new SelectedDate(
-			DayType.CP,
-			new DateRange<Date>(date, date),
-		);
+		const selectedDate = new SelectedDate(DayType.CP, new DateRange<Date>(date, date));
 		expect(selectedDate.isEnd(date)).toBe(true);
 	});
 
 	it('should return correct classes for date', () => {
 		const date = new Date(2024, 0, 1);
-		const selectedDate = new SelectedDate(
-			DayType.CP,
-			new DateRange<Date>(date, date),
-		);
+		const selectedDate = new SelectedDate(DayType.CP, new DateRange<Date>(date, date));
 		const classes = selectedDate.getClasses(date);
 		expect(classes).toContain(DayType.CP);
 	});
 
 	it('should return tooltip for selected date', () => {
 		const date = new Date(2024, 0, 1);
-		const selectedDate = new SelectedDate(
-			DayType.CP,
-			new DateRange<Date>(date, date),
-		);
+		const selectedDate = new SelectedDate(DayType.CP, new DateRange<Date>(date, date));
 		const tooltip = selectedDate.getTooltip(date);
 		expect(tooltip).toBeTruthy();
 	});
@@ -159,19 +139,13 @@ describe('SelectedDate', () => {
 	it('should calculate length in days', () => {
 		const startDate = new Date(2024, 0, 1);
 		const endDate = new Date(2024, 0, 3);
-		const selectedDate = new SelectedDate(
-			DayType.CP,
-			new DateRange<Date>(startDate, endDate),
-		);
+		const selectedDate = new SelectedDate(DayType.CP, new DateRange<Date>(startDate, endDate));
 		expect(selectedDate.getLengthInDays()).toBe(3);
 	});
 
 	it('should not mark TODAY as selected', () => {
 		const date = new Date(2024, 0, 1);
-		const selectedDate = new SelectedDate(
-			DayType.TODAY,
-			new DateRange<Date>(date, date),
-		);
+		const selectedDate = new SelectedDate(DayType.TODAY, new DateRange<Date>(date, date));
 		expect(selectedDate.isSelected(date)).toBe(false);
 	});
 });
@@ -180,18 +154,14 @@ describe('SelectedDates', () => {
 	it('should push selected dates', () => {
 		const selectedDates = new SelectedDates();
 		const date = new Date(2024, 0, 1);
-		selectedDates.push(
-			new SelectedDate(DayType.CP, new DateRange<Date>(date, date)),
-		);
+		selectedDates.push(new SelectedDate(DayType.CP, new DateRange<Date>(date, date)));
 		expect(selectedDates._datesSelected.length).toBe(1);
 	});
 
 	it('should check if date is selected', () => {
 		const selectedDates = new SelectedDates();
 		const date = new Date(2024, 0, 1);
-		selectedDates.push(
-			new SelectedDate(DayType.CP, new DateRange<Date>(date, date)),
-		);
+		selectedDates.push(new SelectedDate(DayType.CP, new DateRange<Date>(date, date)));
 		expect(selectedDates.isSelected(date)).toBe(true);
 	});
 
@@ -212,9 +182,7 @@ describe('SelectedDates', () => {
 	it('should compute heuristics', () => {
 		const selectedDates = new SelectedDates();
 		const date = new Date(2024, 0, 1);
-		selectedDates.push(
-			new SelectedDate(DayType.CP, new DateRange<Date>(date, date)),
-		);
+		selectedDates.push(new SelectedDate(DayType.CP, new DateRange<Date>(date, date)));
 		const heuristic = selectedDates.computeHeuristics();
 		expect(typeof heuristic).toBe('number');
 	});
@@ -222,9 +190,7 @@ describe('SelectedDates', () => {
 	it('should return correct classes', () => {
 		const selectedDates = new SelectedDates();
 		const date = new Date(2024, 0, 1);
-		selectedDates.push(
-			new SelectedDate(DayType.CP, new DateRange<Date>(date, date)),
-		);
+		selectedDates.push(new SelectedDate(DayType.CP, new DateRange<Date>(date, date)));
 		const classes = selectedDates.getClasses(date);
 		expect(classes).toContain(DayType.CP);
 	});
@@ -232,9 +198,7 @@ describe('SelectedDates', () => {
 	it('should return tooltip', () => {
 		const selectedDates = new SelectedDates();
 		const date = new Date(2024, 0, 1);
-		selectedDates.push(
-			new SelectedDate(DayType.CP, new DateRange<Date>(date, date)),
-		);
+		selectedDates.push(new SelectedDate(DayType.CP, new DateRange<Date>(date, date)));
 		const tooltip = selectedDates.getTooltip(date);
 		expect(tooltip).toBeTruthy();
 	});

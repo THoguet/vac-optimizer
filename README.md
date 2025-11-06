@@ -12,6 +12,38 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+## Code Quality
+
+This project uses ESLint and Prettier to maintain code quality and consistency.
+
+### Linting
+
+Check for linting errors:
+
+```bash
+npm run lint
+```
+
+Auto-fix linting issues:
+
+```bash
+npm run lint:fix
+```
+
+### Formatting
+
+Check code formatting:
+
+```bash
+npm run format:check
+```
+
+Format code:
+
+```bash
+npm run format
+```
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
@@ -53,6 +85,15 @@ ng e2e
 ```
 
 Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+
+## CI/CD
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+- **PR Validation**: Automatically runs on pull requests to validate code quality, run tests, and build the application
+- **Docker Build & Push**: Builds and publishes Docker images to GitHub Container Registry on main branch pushes and releases
+- **CodeQL Analysis**: Runs security analysis weekly and on pull requests
+- **Dependabot**: Automatically updates dependencies weekly
 
 ## Additional Resources
 

@@ -28,8 +28,8 @@ export class CalendarService {
 
 	// Get selected dates from current date to the next year
 	getSelectedDatesFromNow(): SelectedDates {
-		const holidays = this.getHolidays();
-		let selectedDates: SelectedDates = new SelectedDates();
+		const _holidays = this.getHolidays();
+		const selectedDates: SelectedDates = new SelectedDates();
 		// Logic to populate selectedDates from now until the next year
 		return selectedDates;
 	}
@@ -37,7 +37,7 @@ export class CalendarService {
 	getSelectedDatesForYear(): SelectedDates {
 		const holidays = this.getHolidays();
 		const monthInAYear = this.monthsInAYearFromNow();
-		let selectedDates: SelectedDates = new SelectedDates();
+		const selectedDates: SelectedDates = new SelectedDates();
 
 		// Use DateCacheService to get today's date components
 		const {
@@ -519,7 +519,7 @@ export class SelectedDates implements SelectedDateInterface {
 			const daysInRange = selectedDate.getLengthInDays();
 
 			// For each day in the range, add it to the appropriate month
-			let currentDate = new Date(selectedDate.range.start);
+			const currentDate = new Date(selectedDate.range.start);
 			for (let i = 0; i < daysInRange; i++) {
 				const monthKey = currentDate.getFullYear() * 12 + currentDate.getMonth();
 				monthCounts.set(monthKey, (monthCounts.get(monthKey) ?? 0) + 1);
@@ -719,7 +719,10 @@ export class SelectedDates implements SelectedDateInterface {
 		}
 	}
 
-	lookForVacation(vacType: DayType, calendarService: CalendarService): { apply: () => void; heuristic: number } {
+	lookForVacation(
+		vacType: DayType,
+		calendarService: CalendarService,
+	): { apply: () => void; heuristic: number } {
 		const daysOfYear = calendarService.monthsInAYearFromNow();
 		const now = new Date();
 		now.setHours(0, 0, 0, 0);

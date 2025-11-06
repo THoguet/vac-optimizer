@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
-import { MatButton, MatButtonModule } from '@angular/material/button';
+import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIcon, MatIconModule } from '@angular/material/icon';
+import { MatIconModule } from '@angular/material/icon';
 import { CalendarSettingsDialog } from '../dialog/calendar-settings-dialog/calendar-settings-dialog';
 import { MatDividerModule } from '@angular/material/divider';
 

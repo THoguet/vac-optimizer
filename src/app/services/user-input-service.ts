@@ -1,4 +1,4 @@
-import { Injectable, signal, PLATFORM_ID, inject } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { VacationsNumber } from './calendar-service';
 
 @Injectable({
