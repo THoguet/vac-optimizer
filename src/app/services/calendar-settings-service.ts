@@ -48,10 +48,19 @@ export class CalendarSettingsService {
 		}));
 	}
 
-	get(id: string): WritableSignal<boolean> {
-		return this.signals.get(id)!;
+	/**
+	 * Returns the signal for the given setting ID, or undefined if not found.
+	 */
+	get(id: string): WritableSignal<boolean> | undefined {
+		return this.signals.get(id);
 	}
 
+	/**
+	 * Returns true if the setting with the given ID exists.
+	 */
+	has(id: string): boolean {
+		return this.signals.has(id);
+	}
 	getDescription(id: string): string {
 		return this.definitions.get(id)?.description ?? '';
 	}
