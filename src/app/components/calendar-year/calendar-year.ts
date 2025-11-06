@@ -35,7 +35,7 @@ export class CalendarYear {
 		effect(() => {
 			this.selectedDates = this.calendarService.getSelectedDatesForYear();
 			const vacationData = this.userInput.vacationNumberSignal();
-			const c = this.calendarSettingsService.samediMalin();
+			const c = this.calendarSettingsService.get('samediMalin')();
 			console.log('Samedi Malin setting:', c);
 			console.log('Optimizing vacations with data:', vacationData);
 			this.isLoading.set(true);

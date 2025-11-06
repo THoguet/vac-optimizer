@@ -4,15 +4,15 @@
 		<p>Configure your calendar settings here.</p>
 	</div>
 	<div style="display: flex; flex-direction: column; gap: 1rem">
-		@for (signal of calendarSettingsService.settings; track signal.id) {
+		@for (setting of calendarSettingsService.settingsArray; track setting.id) {
 			<div style="align-self: flex-start">
 				<mat-slide-toggle
-					[id]="signal.id"
-					[name]="signal.id"
-					[checked]="signal.signal()"
-					(change)="signal.signal.set($event.checked)"
+					[id]="setting.id"
+					[name]="setting.id"
+					[checked]="setting.signal()"
+					(change)="setting.signal.set($event.checked)"
 				>
-					{{ signal.description }}
+					{{ setting.description }}
 				</mat-slide-toggle>
 			</div>
 		}
