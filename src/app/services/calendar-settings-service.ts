@@ -51,18 +51,17 @@ export class CalendarSettingsService {
 	}
 
 	/**
-	 * Returns the signal for the given setting ID, or undefined if not found.
+	 * Returns the signal for the given setting ID.
+	 * @throws Error if the setting ID doesn't exist
 	 */
-	get(id: string): WritableSignal<boolean> | undefined {
-		return this.signals.get(id);
+	get(id: string): WritableSignal<boolean> {
+		const signal = this.signals.get(id);
+		if (!signal) {
+			throw new Error(`Setting with id "${id}" does not exist`);
+		}
+		return signal;
 	}
 
-	/**
-	 * Returns true if the setting with the given ID exists.
-	 */
-	has(id: string): boolean {
-		return this.signals.has(id);
-	}
 	getDescription(id: string): string {
 		return this.definitions.get(id)?.description ?? '';
 	}
