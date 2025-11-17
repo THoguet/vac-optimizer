@@ -2,7 +2,10 @@
 	@if (isLoading()) {
 		<div class="loading-overlay">
 			<div class="loading-spinner">
-				<mat-spinner></mat-spinner>
+				<div class="spinner-container">
+					<mat-spinner [mode]="'determinate'" [value]="loadingProgress()"></mat-spinner>
+					<div class="spinner-text">{{ loadingProgress() }}%</div>
+				</div>
 				<p>Calcul en cours...</p>
 			</div>
 		</div>
