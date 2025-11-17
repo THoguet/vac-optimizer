@@ -17,7 +17,7 @@
 	@if (hasRemainingDays()) {
 		<mat-card class="mat-elevation-z2 warning-card">
 			<mat-card-content class="warning-content">
-				<mat-icon color="warn">warning</mat-icon>
+				<mat-icon color="warn" aria-hidden="true">warning</mat-icon>
 				<span>
 					{{ remainingDays() }} jour{{ remainingDays() > 1 ? 's' : '' }} de vacances non
 					placé{{ remainingDays() > 1 ? 's' : '' }}. Veuillez les placer manuellement.
