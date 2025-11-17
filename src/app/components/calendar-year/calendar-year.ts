@@ -21,6 +21,7 @@ export class CalendarYear {
 	private calendarSettingsService = inject(CalendarSettingsService);
 
 	protected isLoading = signal(true);
+	protected loadingProgress = signal(0);
 
 	// Use DateCacheService instead of creating Date objects
 	private get currentMonth() {
@@ -39,18 +40,26 @@ export class CalendarYear {
 			console.log('Samedi Malin setting:', c);
 			console.log('Optimizing vacations with data:', vacationData);
 			this.isLoading.set(true);
-			// Simulate server-side calculation with a small delay
-			setTimeout(() => {
-				if (this.selectedDates) {
-					// Create a copy to avoid mutating the original signal data
-					this.selectedDates.optimizeVacations(
-						{ ...vacationData },
-						this.calendarSettingsService,
-						this.calendarService,
-					);
-				}
-				this.isLoading.set(false);
-			}, 1);
+			this.loadingProgress.set(0);
+			// Defer execution to allow UI to update
+			queueMicrotask(() => {
+				void (async () => {
+					if (this.selectedDates) {
+						// Create a copy to avoid mutating the original signal data
+						const remainingDays = await this.selectedDates.optimizeVacations(
+							{ ...vacationData },
+							this.calendarSettingsService,
+							this.calendarService,
+							(progress: number) => {
+								this.loadingProgress.set(progress);
+							},
+						);
+						// Update the remaining vacation days signal
+						this.userInput.remainingVacationDaysSignal.set(remainingDays);
+					}
+					this.isLoading.set(false);
+				})();
+			});
 		});
 	}
 

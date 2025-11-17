@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, effect, computed } from '@angular/core';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -6,6 +6,8 @@ import { UserInputService } from '../../services/user-input-service';
 import { VacationsNumber } from '../../services/calendar-service';
 import { debounceTime, takeUntil, Subject } from 'rxjs';
 import { CalendarSettings } from '../calendar-settings/calendar-settings';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
 	selector: 'app-user-input',
@@ -15,7 +17,9 @@ import { CalendarSettings } from '../calendar-settings/calendar-settings';
 		MatInputModule,
 		ReactiveFormsModule,
 		CalendarSettings,
-		CalendarSettings,
+		MatCard,
+		MatCardContent,
+		MatIcon,
 	],
 	templateUrl: './user-input.html',
 	styleUrl: './user-input.scss',
@@ -43,6 +47,13 @@ export class UserInput implements OnInit, OnDestroy {
 		RTT: new FormControl<number | null>(null),
 		Others: new FormControl<number | null>(null),
 	});
+
+	protected remainingDays = computed(() => {
+		const remaining = this.userInputService.remainingVacationDaysSignal();
+		return remaining.cp + remaining.rtt + remaining.other;
+	});
+
+	protected hasRemainingDays = computed(() => this.remainingDays() > 0);
 
 	ngOnInit() {
 		this.userInputForm.valueChanges

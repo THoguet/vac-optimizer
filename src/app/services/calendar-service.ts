@@ -298,6 +298,7 @@ export class SelectedDates implements SelectedDateInterface {
 
 	// Constant to indicate no valid strategy was found
 	private static readonly NO_VALID_STRATEGY_HEURISTIC = -1;
+	private static readonly MAX_DAYS_WITH_SAME_HEURISTIC = 9;
 
 	update(): void {
 		this.datesSelected = this._datesSelected.slice();
@@ -501,7 +502,7 @@ export class SelectedDates implements SelectedDateInterface {
 
 			// Check if adjacent (next day) - this is the best case!
 			if (nextStartTime - currentEndTime === oneDayInMs) {
-				totalScore += 10; // Big bonus for adjacency
+				totalScore += 15; // 50% increased bonus for adjacency; adjacency is highly valued in the scoring system
 			} else if (nextStartTime > currentEndTime) {
 				// Penalty based on days between the two dates
 				const daysBetween = Math.floor((nextStartTime - currentEndTime) / oneDayInMs) - 1;
@@ -535,18 +536,43 @@ export class SelectedDates implements SelectedDateInterface {
 		return totalScore;
 	}
 
-	optimizeVacations(
+	async optimizeVacations(
 		vacationsNumber: VacationsNumber,
 		calendarSettingsService: CalendarSettingsService,
 		calendarService: CalendarService,
-	): void {
+		progressCallback?: (progress: number) => void,
+	): Promise<VacationsNumber> {
 		if (calendarSettingsService.get('samediMalin')()) this.samediMalin(vacationsNumber);
+
+		const initialVacations = { ...vacationsNumber };
+		const totalDays = initialVacations.cp + initialVacations.rtt + initialVacations.other;
+		let processedDays = 0;
+
+		// Helper function to update progress, throttled to every 5%
+		let lastReportedProgress = 0;
+		const PROGRESS_STEP = 5; // percent
+		const updateProgress = async () => {
+			if (progressCallback && totalDays > 0) {
+				const progress = Math.round((processedDays / totalDays) * 100);
+				if (progress - lastReportedProgress >= PROGRESS_STEP || progress === 100) {
+					progressCallback(progress);
+					lastReportedProgress = progress;
+					// Allow UI to update with a microtask
+					await new Promise((resolve) => setTimeout(resolve, 0));
+				}
+			}
+		};
+
+		await updateProgress();
+
 		while (vacationsNumber.cp > 0) {
 			const result = this.lookForVacation(DayType.CP, calendarService);
 			if (result.heuristic === SelectedDates.NO_VALID_STRATEGY_HEURISTIC) {
 				break;
 			}
 			vacationsNumber.cp -= 1;
+			processedDays++;
+			await updateProgress();
 		}
 		while (vacationsNumber.rtt > 0) {
 			const result = this.lookForVacation(DayType.RTT, calendarService);
@@ -554,6 +580,8 @@ export class SelectedDates implements SelectedDateInterface {
 				break;
 			}
 			vacationsNumber.rtt -= 1;
+			processedDays++;
+			await updateProgress();
 		}
 		while (vacationsNumber.other > 0) {
 			const result = this.lookForVacation(DayType.OTHER, calendarService);
@@ -561,7 +589,25 @@ export class SelectedDates implements SelectedDateInterface {
 				break;
 			}
 			vacationsNumber.other -= 1;
+			processedDays++;
+			await updateProgress();
 		}
+
+		// Final progress update (100%)
+		if (progressCallback) {
+			progressCallback(100);
+		}
+
+		// Inform user if not all days were placed
+		const remainingDays = vacationsNumber.cp + vacationsNumber.rtt + vacationsNumber.other;
+		if (remainingDays > 0) {
+			console.warn(
+				`Optimization stopped: ${remainingDays} of ${totalDays} vacation days remain unplaced. ` +
+					`Too many days have equivalent placement quality - please place remaining days manually.`,
+			);
+		}
+
+		return vacationsNumber;
 	}
 
 	samediMalin(vacationsNumber: VacationsNumber): void {
@@ -751,6 +797,7 @@ export class SelectedDates implements SelectedDateInterface {
 		const tempDatesBackup = [...this._datesSelected];
 		let bestStrategy: { apply: () => void; heuristic: number; value: Date } | null = null;
 		let bestHeuristic = -Infinity;
+		let daysWithBestHeuristic = 0;
 
 		// Evaluate each candidate day
 		for (const day of candidateDays) {
@@ -767,6 +814,7 @@ export class SelectedDates implements SelectedDateInterface {
 			// Track only if better than current best
 			if (heuristic > bestHeuristic) {
 				bestHeuristic = heuristic;
+				daysWithBestHeuristic = 1;
 				const capturedDay = day;
 				bestStrategy = {
 					apply: () => {
@@ -781,7 +829,23 @@ export class SelectedDates implements SelectedDateInterface {
 					heuristic: heuristic,
 					value: capturedDay,
 				};
+			} else if (heuristic === bestHeuristic) {
+				daysWithBestHeuristic++;
 			}
+		}
+
+		// Check if too many days have the same best heuristic after evaluating all days
+		if (daysWithBestHeuristic > SelectedDates.MAX_DAYS_WITH_SAME_HEURISTIC) {
+			// Restore backup before stopping
+			this._datesSelected = [...tempDatesBackup];
+			this.datesSelected = this._datesSelected.slice();
+			this.grouping();
+
+			// Stop optimization - let user decide manually
+			return {
+				apply: () => {},
+				heuristic: SelectedDates.NO_VALID_STRATEGY_HEURISTIC,
+			};
 		}
 
 		// Restore backup before returning

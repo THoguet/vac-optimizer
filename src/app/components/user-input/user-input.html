@@ -14,5 +14,16 @@
 			<input matInput type="number" max="365" min="0" formControlName="Others" />
 		</mat-form-field>
 	</form>
+	@if (hasRemainingDays()) {
+		<mat-card class="mat-elevation-z2 warning-card">
+			<mat-card-content class="warning-content">
+				<mat-icon color="warn" aria-hidden="true">warning</mat-icon>
+				<span>
+					{{ remainingDays() }} jour{{ remainingDays() > 1 ? 's' : '' }} de vacances non
+					placé{{ remainingDays() > 1 ? 's' : '' }}. Veuillez les placer manuellement.
+				</span>
+			</mat-card-content>
+		</mat-card>
+	}
 	<app-calendar-settings></app-calendar-settings>
 </div>

@@ -18,4 +18,9 @@ export class UserInputService {
 	}
 
 	readonly vacationNumberSignal = signal<VacationsNumber>(this.getInitialValues());
+	readonly remainingVacationDaysSignal = signal<VacationsNumber>({
+		cp: 0,
+		rtt: 0,
+		other: 0,
+	});
 }
