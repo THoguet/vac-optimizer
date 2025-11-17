@@ -36,7 +36,7 @@
 		"@angular/platform-browser": "^20.3.10",
 		"@angular/platform-server": "^20.3.10",
 		"@angular/router": "^20.3.10",
-		"@angular/ssr": "^20.3.9",
+		"@angular/ssr": "^20.3.10",
 		"date-holidays": "^3.26.2",
 		"dayjs": "^1.11.19",
 		"express": "^5.1.0",
@@ -44,8 +44,8 @@
 		"tslib": "^2.3.0"
 	},
 	"devDependencies": {
-		"@angular/build": "^20.3.9",
-		"@angular/cli": "^20.3.9",
+		"@angular/build": "^20.3.10",
+		"@angular/cli": "^20.3.10",
 		"@angular/compiler-cli": "^20.3.10",
 		"@eslint/js": "^9.39.1",
 		"@types/express": "^5.0.1",
