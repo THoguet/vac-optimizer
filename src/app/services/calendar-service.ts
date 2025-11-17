@@ -6,6 +6,7 @@ import weekOfYear from 'dayjs/plugin/weekOfYear';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import { CalendarSettingsService } from './calendar-settings-service';
 import { DateCacheService } from './date-cache.service';
+import { LoggerService } from './logger.service';
 
 dayjs.extend(weekOfYear);
 dayjs.extend(isoWeek);
@@ -21,6 +22,7 @@ const allTypesOptions: HolidaysTypes.Options = {
 })
 export class CalendarService {
 	private dateCache = inject(DateCacheService);
+	private logger = inject(LoggerService);
 
 	// Cache for holiday timestamps
 	private holidayTimestampsCache: Set<number> | null = null;
@@ -541,6 +543,7 @@ export class SelectedDates implements SelectedDateInterface {
 		calendarSettingsService: CalendarSettingsService,
 		calendarService: CalendarService,
 		progressCallback?: (progress: number) => void,
+		logger?: LoggerService,
 	): Promise<VacationsNumber> {
 		if (calendarSettingsService.get('samediMalin')()) this.samediMalin(vacationsNumber);
 
@@ -600,8 +603,8 @@ export class SelectedDates implements SelectedDateInterface {
 
 		// Inform user if not all days were placed
 		const remainingDays = vacationsNumber.cp + vacationsNumber.rtt + vacationsNumber.other;
-		if (remainingDays > 0) {
-			console.warn(
+		if (remainingDays > 0 && logger) {
+			logger.warn(
 				`Optimization stopped: ${remainingDays} of ${totalDays} vacation days remain unplaced. ` +
 					`Too many days have equivalent placement quality - please place remaining days manually.`,
 			);

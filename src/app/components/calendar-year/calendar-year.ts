@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { CalendarSettingsService } from '../../services/calendar-settings-service';
 import { DateCacheService } from '../../services/date-cache.service';
+import { LoggerService } from '../../services/logger.service';
 
 @Component({
 	selector: 'app-calendar-year',
@@ -19,6 +20,7 @@ export class CalendarYear {
 	private userInput = inject(UserInputService);
 	private calendarService = inject(CalendarService);
 	private calendarSettingsService = inject(CalendarSettingsService);
+	private logger = inject(LoggerService);
 
 	protected isLoading = signal(true);
 	protected loadingProgress = signal(0);
@@ -53,6 +55,7 @@ export class CalendarYear {
 							(progress: number) => {
 								this.loadingProgress.set(progress);
 							},
+							this.logger,
 						);
 						// Update the remaining vacation days signal
 						this.userInput.remainingVacationDaysSignal.set(remainingDays);
