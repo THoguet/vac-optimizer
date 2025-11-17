@@ -548,13 +548,18 @@ export class SelectedDates implements SelectedDateInterface {
 		const totalDays = initialVacations.cp + initialVacations.rtt + initialVacations.other;
 		let processedDays = 0;
 
-		// Helper function to update progress
+		// Helper function to update progress, throttled to every 5%
+		let lastReportedProgress = 0;
+		const PROGRESS_STEP = 5; // percent
 		const updateProgress = async () => {
 			if (progressCallback && totalDays > 0) {
 				const progress = Math.round((processedDays / totalDays) * 100);
-				progressCallback(progress);
-				// Allow UI to update with a microtask
-				await new Promise((resolve) => setTimeout(resolve, 0));
+				if (progress - lastReportedProgress >= PROGRESS_STEP || progress === 100) {
+					progressCallback(progress);
+					lastReportedProgress = progress;
+					// Allow UI to update with a microtask
+					await new Promise((resolve) => setTimeout(resolve, 0));
+				}
 			}
 		};
 
