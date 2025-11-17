@@ -502,7 +502,7 @@ export class SelectedDates implements SelectedDateInterface {
 
 			// Check if adjacent (next day) - this is the best case!
 			if (nextStartTime - currentEndTime === oneDayInMs) {
-				totalScore += 15; // Big bonus for adjacency
+				totalScore += 15; // 50% increased bonus for adjacency; adjacency is highly valued in the scoring system
 			} else if (nextStartTime > currentEndTime) {
 				// Penalty based on days between the two dates
 				const daysBetween = Math.floor((nextStartTime - currentEndTime) / oneDayInMs) - 1;
