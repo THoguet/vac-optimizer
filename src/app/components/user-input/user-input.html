@@ -13,16 +13,28 @@
 			<h3>Ajouter un jour de vacances</h3>
 		</mat-card>
 	</div>
+	<div class="action-buttons">
+		<button matFab extended (click)="triggerComputation()">
+			<mat-icon>calculate</mat-icon>
+			Calculer
+		</button>
+		<app-calendar-settings></app-calendar-settings>
+	</div>
 	@if (hasRemainingDays()) {
 		<mat-card class="mat-elevation-z2 warning-card">
 			<mat-card-content class="warning-content">
 				<mat-icon color="warn">warning</mat-icon>
-				<span>
-					{{ remainingDays() }} jour{{ remainingDays() > 1 ? 's' : '' }} de vacances non
-					placé{{ remainingDays() > 1 ? 's' : '' }}. Veuillez les placer manuellement.
-				</span>
+				<div class="warning">
+					<span>
+						{{ remainingDays() }} jour{{ remainingDays() > 1 ? 's' : '' }} de vacances
+						non placé{{ remainingDays() > 1 ? 's' : '' }}:
+					</span>
+					@for (day of remainingDaysDetails(); track $index) {
+						<span class="remaining-day-detail">- {{ day }}</span>
+					}
+					<span> Veuillez les placer manuellement. </span>
+				</div>
 			</mat-card-content>
 		</mat-card>
 	}
-	<app-calendar-settings></app-calendar-settings>
 </div>

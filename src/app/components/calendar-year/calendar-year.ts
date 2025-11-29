@@ -45,9 +45,10 @@ export class CalendarYear {
 			queueMicrotask(() => {
 				void (async () => {
 					if (this.selectedDates) {
-						// Create a copy to avoid mutating the original signal data
+						// Create a deep copy to avoid mutating the original signal data
+						const vacationDaysCopy = vacationData.map((vd) => ({ ...vd }));
 						const remainingDays = await this.selectedDates.optimizeVacations(
-							{ ...vacationData },
+							vacationDaysCopy,
 							this.calendarSettingsService,
 							this.calendarService,
 							(progress: number) => {

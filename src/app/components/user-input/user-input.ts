@@ -15,6 +15,7 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatIcon } from '@angular/material/icon';
 import { DayInput } from '../userInput/day-input/day-input';
 import { MatButtonModule } from '@angular/material/button';
+import { tooltipTypeMapping, DayType } from '../../services/calendar-service';
 
 @Component({
 	selector: 'app-user-input',
@@ -39,7 +40,22 @@ export class UserInput implements OnInit, OnDestroy {
 
 	protected remainingDays = computed(() => {
 		const remaining = this.userInputService.remainingVacationDaysSignal();
-		return remaining.length;
+		return remaining.reduce((acc, day) => acc + day.numberOfDays, 0);
+	});
+
+	protected remainingDaysDetails = computed(() => {
+		const remaining = this.userInputService.remainingVacationDaysSignal();
+		return remaining
+			.filter((day) => day.numberOfDays > 0)
+			.map((day) => {
+				const typeName = tooltipTypeMapping[day.type as unknown as DayType];
+				const expiryDate = day.expiryDate.toLocaleDateString('fr-FR', {
+					day: 'numeric',
+					month: 'short',
+					year: 'numeric',
+				});
+				return `${day.numberOfDays} ${typeName} (exp. ${expiryDate})`;
+			});
 	});
 
 	protected hasRemainingDays = computed(() => this.remainingDays() > 0);
@@ -57,5 +73,10 @@ export class UserInput implements OnInit, OnDestroy {
 
 	public removeFromList(index: number) {
 		this.daysOff.splice(index, 1);
+	}
+
+	public triggerComputation() {
+		// Trigger signal update by setting a new array reference
+		this.userInputService.vacationNumberSignal.set([...this.daysOff]);
 	}
 }
