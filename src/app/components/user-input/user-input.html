@@ -3,7 +3,7 @@
 	<div class="listOfDays">
 		@for (day of daysOff; track day.id) {
 			<div class="day-input-wrapper" animate.enter="day-enter" animate.leave="day-leave">
-				<app-day-input [day]="day" (deleteEntry)="removeFromList($index)"></app-day-input>
+				<app-day-input [day]="day" (dayChange)="updateDay($index, $event)" (deleteEntry)="removeFromList($index)"></app-day-input>
 			</div>
 		}
 		<mat-card class="add-day-card mat-elevation-z2" (click)="addDay()">

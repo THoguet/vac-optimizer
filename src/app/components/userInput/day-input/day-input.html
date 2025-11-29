@@ -10,7 +10,7 @@
 		/>
 	</mat-form-field>
 	<mat-form-field class="dayTypeInput">
-		<mat-select (valueChange)="dayChange.emit($event.value)" [value]="day().type">
+		<mat-select (valueChange)="onTypeChange($event)" [value]="day().type">
 			<mat-option></mat-option>
 			@for (dayType of selectableDayTypes; track $index) {
 				<mat-option [value]="dayType">{{ tooltipTypeMapping[dayType] }}</mat-option>
