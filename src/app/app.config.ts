@@ -11,6 +11,7 @@ import {
 	withEventReplay,
 	withIncrementalHydration,
 } from '@angular/platform-browser';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 export const appConfig: ApplicationConfig = {
 	providers: [
@@ -18,5 +19,6 @@ export const appConfig: ApplicationConfig = {
 		provideZonelessChangeDetection(),
 		provideRouter(routes),
 		provideClientHydration(withEventReplay(), withIncrementalHydration()),
+		provideAnimationsAsync(),
 	],
 };

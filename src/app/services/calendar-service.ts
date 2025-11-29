@@ -184,10 +184,11 @@ export class CalendarService {
 	}
 }
 
-export type VacationsNumber = {
-	rtt: number;
-	cp: number;
-	other: number;
+export type VacDay = {
+	id: string;
+	type: SelectableDayType;
+	numberOfDays: number;
+	expiryDate: Date;
 };
 
 export type Week = (Date | null)[];
@@ -201,6 +202,12 @@ export enum DayType {
 	CP = 'cp',
 	OTHER = 'other',
 	TODAY = 'today',
+}
+
+export enum SelectableDayType {
+	CP = DayType.CP,
+	RTT = DayType.RTT,
+	OTHER = DayType.OTHER,
 }
 
 export const tooltipTypeMapping: { [key in DayType]: string } = {
@@ -537,11 +544,11 @@ export class SelectedDates implements SelectedDateInterface {
 	}
 
 	async optimizeVacations(
-		vacationsNumber: VacationsNumber,
+		vacationsNumber: any,
 		calendarSettingsService: CalendarSettingsService,
 		calendarService: CalendarService,
 		progressCallback?: (progress: number) => void,
-	): Promise<VacationsNumber> {
+	): Promise<any> {
 		if (calendarSettingsService.get('samediMalin')()) this.samediMalin(vacationsNumber);
 
 		const initialVacations = { ...vacationsNumber };
@@ -605,7 +612,7 @@ export class SelectedDates implements SelectedDateInterface {
 		return vacationsNumber;
 	}
 
-	samediMalin(vacationsNumber: VacationsNumber): void {
+	samediMalin(vacationsNumber: any): void {
 		const now = new Date();
 		now.setHours(0, 0, 0, 0);
 		const nowTime = now.getTime();

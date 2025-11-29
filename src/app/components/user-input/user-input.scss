@@ -25,7 +25,61 @@
 	}
 }
 
+.listOfDays {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.day-input-wrapper {
+	animation: slide-fade-in 200ms ease-out;
+
+	@starting-style {
+		opacity: 0;
+		transform: translateX(-20px);
+	}
+}
+
+.day-enter {
+	animation: slide-fade-in 200ms ease-out;
+}
+
+.day-leave {
+	opacity: 0;
+	transform: translateX(20px);
+	transition:
+		opacity 200ms ease-in,
+		transform 200ms ease-in;
+}
+
+@keyframes slide-fade-in {
+	from {
+		opacity: 0;
+		transform: translateX(-20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
 form {
 	display: flex;
 	flex-direction: column;
+}
+
+.add-day-card {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: 16px;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	cursor: pointer;
+}
+
+.add-day-card h3 {
+	flex-grow: 1;
+	margin: 0;
+	font-weight: normal;
 }

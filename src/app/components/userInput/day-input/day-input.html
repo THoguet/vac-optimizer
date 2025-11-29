@@ -1,0 +1,36 @@
+<!-- <mat-list-item role="listitem"> -->
+<mat-card class="card">
+	<mat-form-field class="numberInput">
+		<input
+			matInput
+			type="number"
+			min="0"
+			[value]="day().numberOfDays"
+			(input)="onInput($event)"
+		/>
+	</mat-form-field>
+	<mat-form-field class="dayTypeInput">
+		<mat-select (valueChange)="dayChange.emit($event.value)" [value]="day().type">
+			<mat-option></mat-option>
+			@for (dayType of selectableDayTypes; track $index) {
+				<mat-option [value]="dayType">{{ tooltipTypeMapping[dayType] }}</mat-option>
+			}
+		</mat-select>
+	</mat-form-field>
+	<mat-form-field class="dateInput">
+		<mat-label>Choose a date</mat-label>
+		<input
+			matInput
+			type="datetime"
+			[matDatepicker]="picker"
+			[value]="day().expiryDate"
+			(dateChange)="addEvent($event)"
+		/>
+		<mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+		<mat-datepicker #picker></mat-datepicker>
+	</mat-form-field>
+	<button matFab aria-label="Delete entry" (click)="deleteEntry.emit()">
+		<mat-icon>close</mat-icon>
+	</button>
+</mat-card>
+<!-- </mat-list-item> -->

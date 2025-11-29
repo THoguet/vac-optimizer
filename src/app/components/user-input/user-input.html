@@ -1,19 +1,18 @@
 <div class="user-input">
 	<p>Optimisez vos jours de vacances en fonction des jours fériés et des week-ends !</p>
-	<form [formGroup]="userInputForm">
-		<mat-form-field appearance="fill">
-			<mat-label>Combien de CP par an ?</mat-label>
-			<input matInput type="number" max="365" min="0" formControlName="CP" />
-		</mat-form-field>
-		<mat-form-field appearance="fill">
-			<mat-label>Combien de jours de RTT par an ?</mat-label>
-			<input matInput type="number" max="365" min="0" formControlName="RTT" />
-		</mat-form-field>
-		<mat-form-field appearance="fill">
-			<mat-label>Autres jours</mat-label>
-			<input matInput type="number" max="365" min="0" formControlName="Others" />
-		</mat-form-field>
-	</form>
+	<div class="listOfDays">
+		@for (day of daysOff; track day.id) {
+			<div class="day-input-wrapper" animate.enter="day-enter" animate.leave="day-leave">
+				<app-day-input [day]="day" (deleteEntry)="removeFromList($index)"></app-day-input>
+			</div>
+		}
+		<mat-card class="add-day-card mat-elevation-z2" (click)="addDay()">
+			<button matFab aria-label="Add entry">
+				<mat-icon>add</mat-icon>
+			</button>
+			<h3>Ajouter un jour de vacances</h3>
+		</mat-card>
+	</div>
 	@if (hasRemainingDays()) {
 		<mat-card class="mat-elevation-z2 warning-card">
 			<mat-card-content class="warning-content">

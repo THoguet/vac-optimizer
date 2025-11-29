@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { VacationsNumber } from './calendar-service';
+import { SelectableDayType, VacDay } from './calendar-service';
 
 @Injectable({
 	providedIn: 'root',
@@ -9,18 +9,39 @@ export class UserInputService {
 		return Math.floor(Math.random() * 9) + 1;
 	}
 
-	private getInitialValues(): VacationsNumber {
+	private getInitialValues(): VacDay[] {
+		return [
+			{
+				id: crypto.randomUUID(),
+				type: SelectableDayType.CP,
+				numberOfDays: this.getRandomNumber(),
+				// today + 365 days
+				expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+			},
+			{
+				id: crypto.randomUUID(),
+				type: SelectableDayType.RTT,
+				numberOfDays: this.getRandomNumber(),
+				expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+			},
+			{
+				id: crypto.randomUUID(),
+				type: SelectableDayType.OTHER,
+				numberOfDays: this.getRandomNumber(),
+				expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+			},
+		];
+	}
+
+	public createVacationDay(): VacDay {
 		return {
-			cp: this.getRandomNumber(),
-			rtt: this.getRandomNumber(),
-			other: this.getRandomNumber(),
+			id: crypto.randomUUID(),
+			type: SelectableDayType.CP,
+			numberOfDays: 1,
+			expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
 		};
 	}
 
-	readonly vacationNumberSignal = signal<VacationsNumber>(this.getInitialValues());
-	readonly remainingVacationDaysSignal = signal<VacationsNumber>({
-		cp: 0,
-		rtt: 0,
-		other: 0,
-	});
+	readonly vacationNumberSignal = signal<VacDay[]>(this.getInitialValues());
+	readonly remainingVacationDaysSignal = signal<VacDay[]>([]);
 }

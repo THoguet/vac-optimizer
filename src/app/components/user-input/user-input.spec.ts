@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { UserInput } from './user-input';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 describe('UserInput', () => {
 	let component: UserInput;
@@ -9,7 +10,7 @@ describe('UserInput', () => {
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
 			imports: [UserInput],
-			providers: [provideZonelessChangeDetection()],
+			providers: [provideZonelessChangeDetection(), provideAnimationsAsync()],
 		}).compileComponents();
 
 		fixture = TestBed.createComponent(UserInput);
