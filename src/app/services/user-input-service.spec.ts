@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { UserInputService } from './user-input-service';
+import { SelectableDayType, VacDay } from './calendar-service';
 
-describe('UserInput', () => {
+describe('UserInputService', () => {
 	let service: UserInputService;
 
 	beforeEach(() => {
@@ -16,19 +17,41 @@ describe('UserInput', () => {
 		expect(service).toBeTruthy();
 	});
 
-	it('should initialize with random vacation numbers', () => {
+	it('should initialize with vacation days array', () => {
 		const vacations = service.vacationNumberSignal();
-		expect(vacations.cp).toBeGreaterThanOrEqual(1);
-		expect(vacations.cp).toBeLessThanOrEqual(9);
-		expect(vacations.rtt).toBeGreaterThanOrEqual(1);
-		expect(vacations.rtt).toBeLessThanOrEqual(9);
-		expect(vacations.other).toBeGreaterThanOrEqual(1);
-		expect(vacations.other).toBeLessThanOrEqual(9);
+		expect(Array.isArray(vacations)).toBe(true);
+		expect(vacations.length).toBeGreaterThan(0);
+	});
+
+	it('should have vacation days with valid properties', () => {
+		const vacations = service.vacationNumberSignal();
+		vacations.forEach((day) => {
+			expect(day.id).toBeDefined();
+			expect(day.type).toBeDefined();
+			expect(day.numberOfDays).toBeGreaterThanOrEqual(1);
+			expect(day.numberOfDays).toBeLessThanOrEqual(9);
+			expect(day.expiryDate).toBeInstanceOf(Date);
+		});
 	});
 
 	it('should update vacation number signal', () => {
-		const newVacations = { cp: 5, rtt: 3, other: 2 };
+		const newVacations: VacDay[] = [
+			{
+				id: 'test-id',
+				type: SelectableDayType.CP,
+				numberOfDays: 5,
+				expiryDate: new Date(),
+			},
+		];
 		service.vacationNumberSignal.set(newVacations);
 		expect(service.vacationNumberSignal()).toEqual(newVacations);
+	});
+
+	it('should create a new vacation day', () => {
+		const newDay = service.createVacationDay();
+		expect(newDay.id).toBeDefined();
+		expect(newDay.type).toBe(SelectableDayType.CP);
+		expect(newDay.numberOfDays).toBe(1);
+		expect(newDay.expiryDate).toBeInstanceOf(Date);
 	});
 });
