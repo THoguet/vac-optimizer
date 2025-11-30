@@ -1,29 +1,40 @@
 <div class="user-input">
 	<p>Optimisez vos jours de vacances en fonction des jours fériés et des week-ends !</p>
-	<form [formGroup]="userInputForm">
-		<mat-form-field appearance="fill">
-			<mat-label>Combien de CP par an ?</mat-label>
-			<input matInput type="number" max="365" min="0" formControlName="CP" />
-		</mat-form-field>
-		<mat-form-field appearance="fill">
-			<mat-label>Combien de jours de RTT par an ?</mat-label>
-			<input matInput type="number" max="365" min="0" formControlName="RTT" />
-		</mat-form-field>
-		<mat-form-field appearance="fill">
-			<mat-label>Autres jours</mat-label>
-			<input matInput type="number" max="365" min="0" formControlName="Others" />
-		</mat-form-field>
-	</form>
+	<div class="listOfDays">
+		@for (day of daysOff; track day.id) {
+			<div class="day-input-wrapper" animate.enter="day-enter" animate.leave="day-leave">
+				<app-day-input [day]="day" (dayChange)="updateDay($index, $event)" (deleteEntry)="removeFromList($index)"></app-day-input>
+			</div>
+		}
+		<mat-card class="add-day-card mat-elevation-z2" (click)="addDay()">
+			<button matFab aria-label="Add entry">
+				<mat-icon>add</mat-icon>
+			</button>
+			<h3>Ajouter un jour de vacances</h3>
+		</mat-card>
+	</div>
+	<div class="action-buttons">
+		<button matFab extended (click)="triggerComputation()">
+			<mat-icon>calculate</mat-icon>
+			Calculer
+		</button>
+		<app-calendar-settings></app-calendar-settings>
+	</div>
 	@if (hasRemainingDays()) {
 		<mat-card class="mat-elevation-z2 warning-card">
 			<mat-card-content class="warning-content">
-				<mat-icon color="warn" aria-hidden="true">warning</mat-icon>
-				<span>
-					{{ remainingDays() }} jour{{ remainingDays() > 1 ? 's' : '' }} de vacances non
-					placé{{ remainingDays() > 1 ? 's' : '' }}. Veuillez les placer manuellement.
-				</span>
+				<mat-icon color="warn">warning</mat-icon>
+				<div class="warning">
+					<span>
+						{{ remainingDays() }} jour{{ remainingDays() > 1 ? 's' : '' }} de vacances
+						non placé{{ remainingDays() > 1 ? 's' : '' }}:
+					</span>
+					@for (day of remainingDaysDetails(); track $index) {
+						<span class="remaining-day-detail">- {{ day }}</span>
+					}
+					<span> Veuillez les placer manuellement. </span>
+				</div>
 			</mat-card-content>
 		</mat-card>
 	}
-	<app-calendar-settings></app-calendar-settings>
 </div>

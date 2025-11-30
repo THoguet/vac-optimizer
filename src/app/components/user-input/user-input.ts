@@ -1,79 +1,78 @@
-import { Component, OnInit, OnDestroy, effect, computed } from '@angular/core';
-import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { MatInputModule } from '@angular/material/input';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { UserInputService } from '../../services/user-input-service';
-import { VacationsNumber } from '../../services/calendar-service';
-import { debounceTime, takeUntil, Subject } from 'rxjs';
 import { CalendarSettings } from '../calendar-settings/calendar-settings';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatIcon } from '@angular/material/icon';
+import { DayInput } from '../userInput/day-input/day-input';
+import { MatButtonModule } from '@angular/material/button';
+import { tooltipTypeMapping, DayType, VacDay } from '../../services/calendar-service';
 
 @Component({
 	selector: 'app-user-input',
 	imports: [
-		MatFormField,
-		MatLabel,
 		MatInputModule,
-		ReactiveFormsModule,
 		CalendarSettings,
 		MatCard,
 		MatCardContent,
 		MatIcon,
+		MatButtonModule,
+		DayInput,
 	],
 	templateUrl: './user-input.html',
 	styleUrl: './user-input.scss',
+	changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UserInput implements OnInit, OnDestroy {
-	constructor(private userInputService: UserInputService) {
-		// Watch for signal changes and update form
-		effect(() => {
-			const vacationData = this.userInputService.vacationNumberSignal();
-			this.userInputForm.patchValue(
-				{
-					CP: vacationData.cp,
-					RTT: vacationData.rtt,
-					Others: vacationData.other,
-				},
-				{ emitEvent: false },
-			);
-		});
-	}
-
-	private destroy$ = new Subject<void>();
-
-	userInputForm: FormGroup = new FormGroup({
-		CP: new FormControl<number | null>(null),
-		RTT: new FormControl<number | null>(null),
-		Others: new FormControl<number | null>(null),
-	});
+export class UserInput {
+	private userInputService: UserInputService = inject(UserInputService);
 
 	protected remainingDays = computed(() => {
 		const remaining = this.userInputService.remainingVacationDaysSignal();
-		return remaining.cp + remaining.rtt + remaining.other;
+		return remaining.reduce((acc, day) => acc + day.numberOfDays, 0);
+	});
+
+	protected remainingDaysDetails = computed(() => {
+		const remaining = this.userInputService.remainingVacationDaysSignal();
+		return remaining
+			.filter((day) => day.numberOfDays > 0)
+			.map((day) => {
+				const typeName = tooltipTypeMapping[day.type as unknown as DayType];
+				const expiryDate = day.expiryDate.toLocaleDateString('fr-FR', {
+					day: 'numeric',
+					month: 'short',
+					year: 'numeric',
+				});
+				return `${day.numberOfDays} ${typeName} (exp. ${expiryDate})`;
+			});
 	});
 
 	protected hasRemainingDays = computed(() => this.remainingDays() > 0);
 
-	ngOnInit() {
-		this.userInputForm.valueChanges
-			.pipe(debounceTime(1500), takeUntil(this.destroy$))
-			.subscribe(() => this.submitForm());
+	protected get daysOff() {
+		return this.userInputService.vacationNumberSignal();
 	}
 
-	ngOnDestroy() {
-		this.destroy$.next();
-		this.destroy$.complete();
+	public addDay() {
+		this.userInputService.vacationNumberSignal.update((days) => [
+			...days,
+			this.userInputService.createVacationDay(),
+		]);
 	}
 
-	private submitForm() {
-		if (this.userInputForm.valid) {
-			const vacationData: VacationsNumber = {
-				cp: this.userInputForm.get('CP')?.value || 0,
-				rtt: this.userInputForm.get('RTT')?.value || 0,
-				other: this.userInputForm.get('Others')?.value || 0,
-			};
-			this.userInputService.vacationNumberSignal.set(vacationData);
-		}
+	public removeFromList(index: number) {
+		this.userInputService.vacationNumberSignal.update((days) =>
+			days.filter((_, i) => i !== index),
+		);
+	}
+
+	public updateDay(index: number, updatedDay: VacDay) {
+		this.userInputService.vacationNumberSignal.update((days) =>
+			days.map((day, i) => (i === index ? updatedDay : day)),
+		);
+	}
+
+	public triggerComputation() {
+		// Trigger signal update by setting a new array reference
+		this.userInputService.vacationNumberSignal.update((days) => [...days]);
 	}
 }

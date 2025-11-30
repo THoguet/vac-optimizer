@@ -1,0 +1,21 @@
+.card {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16px;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+.dateInput {
+	flex-grow: 1;
+}
+
+.numberInput {
+	width: 80px;
+}
+
+::ng-deep .mat-mdc-form-field-subscript-wrapper {
+	display: none;
+}

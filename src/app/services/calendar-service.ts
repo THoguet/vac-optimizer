@@ -184,10 +184,11 @@ export class CalendarService {
 	}
 }
 
-export type VacationsNumber = {
-	rtt: number;
-	cp: number;
-	other: number;
+export type VacDay = {
+	id: string;
+	type: SelectableDayType;
+	numberOfDays: number;
+	expiryDate: Date;
 };
 
 export type Week = (Date | null)[];
@@ -201,6 +202,12 @@ export enum DayType {
 	CP = 'cp',
 	OTHER = 'other',
 	TODAY = 'today',
+}
+
+export enum SelectableDayType {
+	CP = DayType.CP,
+	RTT = DayType.RTT,
+	OTHER = DayType.OTHER,
 }
 
 export const tooltipTypeMapping: { [key in DayType]: string } = {
@@ -537,15 +544,15 @@ export class SelectedDates implements SelectedDateInterface {
 	}
 
 	async optimizeVacations(
-		vacationsNumber: VacationsNumber,
+		vacationDays: VacDay[],
 		calendarSettingsService: CalendarSettingsService,
 		calendarService: CalendarService,
 		progressCallback?: (progress: number) => void,
-	): Promise<VacationsNumber> {
-		if (calendarSettingsService.get('samediMalin')()) this.samediMalin(vacationsNumber);
+	): Promise<VacDay[]> {
+		if (calendarSettingsService.get('samediMalin')()) this.samediMalin(vacationDays);
 
-		const initialVacations = { ...vacationsNumber };
-		const totalDays = initialVacations.cp + initialVacations.rtt + initialVacations.other;
+		// Calculate total days to process
+		const totalDays = vacationDays.reduce((sum, vd) => sum + vd.numberOfDays, 0);
 		let processedDays = 0;
 
 		// Helper function to update progress, throttled to every 5%
@@ -565,30 +572,30 @@ export class SelectedDates implements SelectedDateInterface {
 
 		await updateProgress();
 
-		while (vacationsNumber.cp > 0) {
-			const result = this.lookForVacation(DayType.CP, calendarService);
-			if (result.heuristic === SelectedDates.NO_VALID_STRATEGY_HEURISTIC) {
+		// Track VacDays that can't find valid placements
+		const exhaustedVacDayIds = new Set<string>();
+
+		// Process vacation days ordered by expiration date (earliest first)
+		while (vacationDays.some((vd) => vd.numberOfDays > 0 && !exhaustedVacDayIds.has(vd.id))) {
+			// Sort by expiration date to use days that expire first, excluding exhausted ones
+			const sortedVacDays = [...vacationDays]
+				.filter((vd) => vd.numberOfDays > 0 && !exhaustedVacDayIds.has(vd.id))
+				.sort((a, b) => a.expiryDate.getTime() - b.expiryDate.getTime());
+
+			if (sortedVacDays.length === 0) {
 				break;
 			}
-			vacationsNumber.cp -= 1;
-			processedDays++;
-			await updateProgress();
-		}
-		while (vacationsNumber.rtt > 0) {
-			const result = this.lookForVacation(DayType.RTT, calendarService);
+
+			const vacDayToUse = sortedVacDays[0];
+			const result = this.lookForVacation(vacDayToUse, calendarService);
+
 			if (result.heuristic === SelectedDates.NO_VALID_STRATEGY_HEURISTIC) {
-				break;
+				// Mark this VacDay as exhausted and try other vacation days
+				exhaustedVacDayIds.add(vacDayToUse.id);
+				continue;
 			}
-			vacationsNumber.rtt -= 1;
-			processedDays++;
-			await updateProgress();
-		}
-		while (vacationsNumber.other > 0) {
-			const result = this.lookForVacation(DayType.OTHER, calendarService);
-			if (result.heuristic === SelectedDates.NO_VALID_STRATEGY_HEURISTIC) {
-				break;
-			}
-			vacationsNumber.other -= 1;
+
+			vacDayToUse.numberOfDays -= 1;
 			processedDays++;
 			await updateProgress();
 		}
@@ -599,7 +606,7 @@ export class SelectedDates implements SelectedDateInterface {
 		}
 
 		// Inform user if not all days were placed
-		const remainingDays = vacationsNumber.cp + vacationsNumber.rtt + vacationsNumber.other;
+		const remainingDays = vacationDays.reduce((sum, vd) => sum + vd.numberOfDays, 0);
 		if (remainingDays > 0) {
 			console.warn(
 				`Optimization stopped: ${remainingDays} of ${totalDays} vacation days remain unplaced. ` +
@@ -607,10 +614,10 @@ export class SelectedDates implements SelectedDateInterface {
 			);
 		}
 
-		return vacationsNumber;
+		return vacationDays;
 	}
 
-	samediMalin(vacationsNumber: VacationsNumber): void {
+	samediMalin(vacationDays: VacDay[]): void {
 		const now = new Date();
 		now.setHours(0, 0, 0, 0);
 		const nowTime = now.getTime();
@@ -619,13 +626,62 @@ export class SelectedDates implements SelectedDateInterface {
 			(date) => date.type === DayType.CLOSED_DAY && date.range.start?.getDay() === 6,
 		);
 
+		// Helper function to get available CP days that don't expire before a given date (ordered by expiry date)
+		const getAvailableCpDaysForDate = (useByDate: Date): VacDay[] => {
+			const useByTime = useByDate.getTime();
+			return vacationDays
+				.filter(
+					(vd) =>
+						vd.type === SelectableDayType.CP &&
+						vd.numberOfDays > 0 &&
+						vd.expiryDate.getTime() >= useByTime,
+				)
+				.sort((a, b) => a.expiryDate.getTime() - b.expiryDate.getTime());
+		};
+
+		// Helper function to get total available CP days that don't expire before a given date
+		const getTotalCpDaysForDate = (useByDate: Date): number => {
+			const useByTime = useByDate.getTime();
+			return vacationDays
+				.filter(
+					(vd) =>
+						vd.type === SelectableDayType.CP && vd.expiryDate.getTime() >= useByTime,
+				)
+				.reduce((sum, vd) => sum + vd.numberOfDays, 0);
+		};
+
+		// Helper function to consume 2 CP days from the available pool for a specific date
+		const consume2CpDaysForDate = (useByDate: Date): boolean => {
+			let daysToConsume = 2;
+			const cpDays = getAvailableCpDaysForDate(useByDate);
+			for (const cpDay of cpDays) {
+				if (daysToConsume === 0) break;
+				const toConsume = Math.min(cpDay.numberOfDays, daysToConsume);
+				cpDay.numberOfDays -= toConsume;
+				daysToConsume -= toConsume;
+			}
+			return daysToConsume === 0;
+		};
+
+		// Helper function to add 1 OTHER day as reward
+		const addOtherDayReward = (): void => {
+			// Find an existing OTHER VacDay or create a new one
+			const otherDay = vacationDays.find((vd) => vd.type === SelectableDayType.OTHER);
+			if (otherDay) {
+				otherDay.numberOfDays += 1;
+			} else {
+				// Create a new OTHER VacDay with a far future expiry date
+				vacationDays.push({
+					id: crypto.randomUUID(),
+					type: SelectableDayType.OTHER,
+					numberOfDays: 1,
+					expiryDate: new Date(now.getFullYear() + 10, 11, 31),
+				});
+			}
+		};
+
 		for (const holiday of samedi_ferie) {
 			if (!holiday.range.start) continue;
-
-			// Skip if no CP days available
-			if (vacationsNumber.cp < 2) {
-				continue;
-			}
 
 			// Get the Saturday date (holiday) and the following Sunday
 			const saturdayDate = new Date(holiday.range.start);
@@ -651,21 +707,24 @@ export class SelectedDates implements SelectedDateInterface {
 			const oneDayAfter = new Date(sundayDate);
 			oneDayAfter.setDate(sundayDate.getDate() + 1);
 
-			// Check if we can apply each strategy (and not in the past)
+			// Check if we can apply each strategy (not in the past, not already selected, and have non-expired CP days)
 			const canApplyTwoBeforeStrategy =
 				twoDaysBefore1.getTime() >= nowTime &&
 				!this.isSelected(twoDaysBefore1) &&
-				!this.isSelected(twoDaysBefore2);
+				!this.isSelected(twoDaysBefore2) &&
+				getTotalCpDaysForDate(twoDaysBefore2) >= 2; // Check expiry against the latest date used
 
 			const canApplyTwoAfterStrategy =
 				twoDaysAfter1.getTime() >= nowTime &&
 				!this.isSelected(twoDaysAfter1) &&
-				!this.isSelected(twoDaysAfter2);
+				!this.isSelected(twoDaysAfter2) &&
+				getTotalCpDaysForDate(twoDaysAfter2) >= 2; // Check expiry against the latest date used
 
 			const canApplyMixedStrategy =
 				oneDayBefore.getTime() >= nowTime &&
 				!this.isSelected(oneDayBefore) &&
-				!this.isSelected(oneDayAfter);
+				!this.isSelected(oneDayAfter) &&
+				getTotalCpDaysForDate(oneDayAfter) >= 2; // Check expiry against the latest date used
 
 			// Test all applicable strategies and choose the one with the best heuristic score
 			const strategies: { apply: () => void; heuristic: number }[] = [];
@@ -688,8 +747,8 @@ export class SelectedDates implements SelectedDateInterface {
 								new DateRange<Date>(twoDaysBefore1, twoDaysBefore2),
 							),
 						);
-						vacationsNumber.cp -= 2;
-						vacationsNumber.other += 1; // Reward: gain 1 other day
+						consume2CpDaysForDate(twoDaysBefore2);
+						addOtherDayReward();
 					},
 					heuristic: heuristic,
 				});
@@ -712,8 +771,8 @@ export class SelectedDates implements SelectedDateInterface {
 								new DateRange<Date>(twoDaysAfter1, twoDaysAfter2),
 							),
 						);
-						vacationsNumber.cp -= 2;
-						vacationsNumber.other += 1; // Reward: gain 1 other day
+						consume2CpDaysForDate(twoDaysAfter2);
+						addOtherDayReward();
 					},
 					heuristic: heuristic,
 				});
@@ -745,8 +804,8 @@ export class SelectedDates implements SelectedDateInterface {
 								new DateRange<Date>(oneDayAfter, oneDayAfter),
 							),
 						);
-						vacationsNumber.cp -= 2;
-						vacationsNumber.other += 1; // Reward: gain 1 other day
+						consume2CpDaysForDate(oneDayAfter);
+						addOtherDayReward();
 					},
 					heuristic: heuristic,
 				});
@@ -766,22 +825,24 @@ export class SelectedDates implements SelectedDateInterface {
 	}
 
 	lookForVacation(
-		vacType: DayType,
+		vacDay: VacDay,
 		calendarService: CalendarService,
 	): { apply: () => void; heuristic: number } {
 		const daysOfYear = calendarService.monthsInAYearFromNow();
 		const now = new Date();
 		now.setHours(0, 0, 0, 0);
 		const nowTime = now.getTime();
+		const expiryTime = vacDay.expiryDate.getTime();
 
-		// Preprocess: filter out past days and already selected days in one pass
+		// Preprocess: filter out past days, already selected days, and days after expiry date
 		const candidateDays: Date[] = [];
 		for (const month of daysOfYear) {
 			for (const week of month) {
 				for (const day of week) {
 					if (day) {
 						day.setHours(0, 0, 0, 0);
-						if (day.getTime() >= nowTime && !this.isSelected(day)) {
+						const dayTime = day.getTime();
+						if (dayTime >= nowTime && dayTime <= expiryTime && !this.isSelected(day)) {
 							candidateDays.push(day);
 						}
 					}
@@ -794,6 +855,7 @@ export class SelectedDates implements SelectedDateInterface {
 			return { apply: () => {}, heuristic: SelectedDates.NO_VALID_STRATEGY_HEURISTIC };
 		}
 
+		const vacType = vacDay.type as unknown as DayType;
 		const tempDatesBackup = [...this._datesSelected];
 		let bestStrategy: { apply: () => void; heuristic: number; value: Date } | null = null;
 		let bestHeuristic = -Infinity;

@@ -3,14 +3,14 @@ import { UserInputService } from '../../services/user-input-service';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { CalendarMonth } from '../calendar-month/calendar-month';
 import { CalendarService, SelectedDates } from '../../services/calendar-service';
-import { CommonModule } from '@angular/common';
+
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { CalendarSettingsService } from '../../services/calendar-settings-service';
 import { DateCacheService } from '../../services/date-cache.service';
 
 @Component({
 	selector: 'app-calendar-year',
-	imports: [MatCard, CalendarMonth, MatCardContent, CommonModule, MatProgressSpinner],
+	imports: [MatCard, CalendarMonth, MatCardContent, MatProgressSpinner],
 	templateUrl: './calendar-year.html',
 	styleUrl: './calendar-year.scss',
 })
@@ -45,9 +45,10 @@ export class CalendarYear {
 			queueMicrotask(() => {
 				void (async () => {
 					if (this.selectedDates) {
-						// Create a copy to avoid mutating the original signal data
+						// Create a deep copy to avoid mutating the original signal data
+						const vacationDaysCopy = vacationData.map((vd) => ({ ...vd }));
 						const remainingDays = await this.selectedDates.optimizeVacations(
-							{ ...vacationData },
+							vacationDaysCopy,
 							this.calendarSettingsService,
 							this.calendarService,
 							(progress: number) => {
