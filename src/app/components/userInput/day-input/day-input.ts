@@ -90,12 +90,14 @@ export class DayInput {
 
 	onInput(event: Event) {
 		const value = Number((event.target as HTMLInputElement).value);
-		this.day().numberOfDays = value;
-		this.dayChange.emit(this.day());
+		this.dayChange.emit({ ...this.day(), numberOfDays: value });
+	}
+
+	onTypeChange(type: SelectableDayType) {
+		this.dayChange.emit({ ...this.day(), type });
 	}
 
 	addEvent(event: MatDatepickerInputEvent<Date>) {
-		this.day().expiryDate = event.value!;
-		this.dayChange.emit(this.day());
+		this.dayChange.emit({ ...this.day(), expiryDate: event.value! });
 	}
 }
