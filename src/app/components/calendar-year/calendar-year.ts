@@ -1,4 +1,4 @@
-import { Component, effect, signal, inject } from '@angular/core';
+import { Component, effect, signal, inject, untracked } from '@angular/core';
 import { UserInputService } from '../../services/user-input-service';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { CalendarMonth } from '../calendar-month/calendar-month';
@@ -34,9 +34,11 @@ export class CalendarYear {
 
 	constructor() {
 		effect(() => {
+			this.userInput.computeTriggerSignal();
+
 			this.selectedDates = this.calendarService.getSelectedDatesForYear();
-			const vacationData = this.userInput.vacationNumberSignal();
-			const c = this.calendarSettingsService.get('samediMalin')();
+			const vacationData = untracked(() => this.userInput.vacationNumberSignal());
+			const c = untracked(() => this.calendarSettingsService.get('samediMalin')());
 			console.log('Samedi Malin setting:', c);
 			console.log('Optimizing vacations with data:', vacationData);
 			this.isLoading.set(true);

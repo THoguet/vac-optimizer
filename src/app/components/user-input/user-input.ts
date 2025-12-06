@@ -72,7 +72,6 @@ export class UserInput {
 	}
 
 	public triggerComputation() {
-		// Trigger signal update by setting a new array reference
-		this.userInputService.vacationNumberSignal.update((days) => [...days]);
+		this.userInputService.requestComputation();
 	}
 }

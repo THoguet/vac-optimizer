@@ -44,4 +44,9 @@ export class UserInputService {
 
 	readonly vacationNumberSignal = signal<VacDay[]>(this.getInitialValues());
 	readonly remainingVacationDaysSignal = signal<VacDay[]>([]);
+	readonly computeTriggerSignal = signal(0);
+
+	public requestComputation(): void {
+		this.computeTriggerSignal.update((count) => count + 1);
+	}
 }
