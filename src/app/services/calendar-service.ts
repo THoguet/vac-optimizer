@@ -273,7 +273,7 @@ export class SelectedDate implements SelectedDateInterface {
 	getClasses(date: Date): string {
 		let returnType: DayType | string = '';
 		if (this.type && date >= this.range.start! && date <= this.range.end!) {
-			returnType = returnType += this.type + ' ';
+			returnType += this.type + ' ';
 		}
 		return returnType;
 	}
