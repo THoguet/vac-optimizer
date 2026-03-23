@@ -3,12 +3,16 @@ name: Docker Build and Push
 on:
     push:
         branches: [main]
+    pull_request:
+        branches: [main]
+        types: [closed]
     release:
         types: [published]
     workflow_dispatch:
 
 jobs:
     build-and-push:
+        if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
         runs-on: ubuntu-latest
         permissions:
             contents: read
